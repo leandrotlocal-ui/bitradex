@@ -1,0 +1,22 @@
+{
+  "name": "Bitradex — Painel de Liderança",
+  "short_name": "Bitradex",
+  "description": "Painel multi-usuário de gestão de rede e custódias",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#03050a",
+  "theme_color": "#03050a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/4f46e5/ffffff?text=BX",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/4f46e5/ffffff?text=BX",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
