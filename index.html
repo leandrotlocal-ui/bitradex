@@ -4,964 +4,105 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Bitradex - Gerenciamento de Rede Pro</title>
-    <!-- Tailwind CSS para design de alta fidelidade -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- React e ReactDOM (Versões estáveis UMD) -->
+    <!-- React e ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    
-    <!-- Babel Standalone para transpilação JSX -->
+    <!-- Babel para JSX -->
     <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js" crossorigin></script>
-    
-    <!-- SDK Oficial do Supabase em formato UMD (Prevenção de Tela Preta) -->
+    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    
-    <!-- SheetJS para exportação de dados Excel -->
+    <!-- SheetJS -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: #03050a; 
-            color: #f3f4f6; 
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #03050a; color: #f3f4f6; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
-        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
-    <div id="root" class="flex-1 flex flex-col"></div>
+<body class="min-h-screen">
+    <div id="root"></div>
 
     <script type="text/babel" data-presets="react">
-        const { useState, useMemo, useEffect } = React;
+        const { useState, useEffect } = React;
 
-        if (!window.SUPABASE_URL) window.SUPABASE_URL = "https://ntqiunpljjehuiqdjetc.supabase.co";
-        if (!window.SUPABASE_ANON_KEY) window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50cWl1bnBsamplaHVpcWRqZXRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjY0NDAsImV4cCI6MjA5NzgwMjQ0MH0.N39lOduuu-pLysAWP6t0PSe6HFdmQELYXsXJ7IwDwpY";
+        const SUPABASE_URL = "https://ntqiunpljjehuiqdjetc.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50cWl1bnBsamplaHVpcWRqZXRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjY0NDAsImV4cCI6MjA5NzgwMjQ0MH0.N39lOduuu-pLysAWP6t0PSe6HFdmQELYXsXJ7IwDwpY";
         
-        const getSupabase = () => {
-            if (window.supabaseClient) return window.supabaseClient;
-            const lib = window.supabase || window.Supabase;
-            if (lib && window.SUPABASE_URL) {
-                try {
-                    window.supabaseClient = lib.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-                    return window.supabaseClient;
-                } catch (e) {
-                    console.error("Falha ao instanciar o cliente Supabase:", e);
-                }
-            }
-            return null;
-        };
-
-        const Icons = {
-            Dashboard: () => (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>),
-            Network: () => (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>),
-            Calculator: () => (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="4" y="4" width="16" height="16" rx="2" /><line x1="9" y1="9" x2="15" y2="9" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" /></svg>),
-            Check: () => (<svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>),
-            Lock: () => (<svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>),
-            Trash: () => (<svg className="w-4 h-4 text-red-400 hover:text-red-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>),
-            Edit: () => (<svg className="w-4 h-4 text-amber-400 hover:text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>),
-            Link: () => (<svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>)
-        };
-
-        const VIP_RULES = [
-            { level: 'VIP6', rate: 0.6, reqDirects: 10, reqTeamVol: 15000000, reqPersonal: 3200, prevVip: 'VIP5' },
-            { level: 'VIP5', rate: 0.5, reqDirects: 9, reqTeamVol: 6000000, reqPersonal: 1600, prevVip: 'VIP4' },
-            { level: 'VIP4', rate: 0.4, reqDirects: 8, reqTeamVol: 2000000, reqPersonal: 800, prevVip: 'VIP3' },
-            { level: 'VIP3', rate: 0.3, reqDirects: 7, reqTeamVol: 500000, reqPersonal: 400, prevVip: 'VIP2' },
-            { level: 'VIP2', rate: 0.2, reqDirects: 6, reqTeamVol: 150000, reqPersonal: 200, prevVip: 'VIP1' },
-            { level: 'VIP1', rate: 0.1, reqDirects: 5, reqTeamVol: 50000, reqPersonal: 100, prevVip: null },
-            { level: 'Membro', rate: 0.0, reqDirects: 0, reqTeamVol: 0, reqPersonal: 0, prevVip: null },
-        ];
-
-        const getPersonalSum = (user) => {
-            if (!user || !user.custodias) return 0;
-            return user.custodias.reduce((sum, c) => sum + (parseFloat(c.value) || 0), 0);
-        };
-
-        const getMonthlyYield = (user) => {
-            if (!user || !user.custodias) return 0;
-            return user.custodias.reduce((sum, c) => sum + ((parseFloat(c.value) || 0) * ((parseFloat(c.rate) || 0) / 100)), 0);
-        };
-
-        const TreeMemberCard = ({ memberId, network, stats, onEdit, onAddSub, onRemove, currentUserId }) => {
-            const member = network[memberId];
-            const memberStats = stats[memberId];
-            const [isCollapsed, setIsCollapsed] = useState(false);
-
-            if (!member || !memberStats) return null;
-
-            const isRootOfSession = memberId === currentUserId;
-            const isIndependentUser = member.userId && member.userId !== currentUserId && !isRootOfSession;
-            const hasChildren = member.children && member.children.length > 0;
-            const totalPersonal = getPersonalSum(member);
-
-            return (
-                <div className="flex flex-col items-center">
-                    <div className={`p-4 rounded-2xl border text-left min-w-[220px] max-w-[260px] shadow-2xl relative transition-all duration-300 hover:scale-105 z-20
-                        ${isRootOfSession 
-                            ? 'bg-gradient-to-b from-[#0a182d] to-[#040914] border-indigo-500/80 shadow-indigo-950/40' 
-                            : isIndependentUser
-                                ? 'bg-gradient-to-b from-[#1b241c] to-[#0d140e] border-emerald-600/50 shadow-emerald-950/20'
-                                : 'bg-[#0e1222] border-slate-800 shadow-black/40'}`}>
-                        
-                        {hasChildren && (
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); setIsCollapsed(!isCollapsed); }}
-                                className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-[10px] text-gray-300 hover:bg-indigo-600 hover:border-indigo-500 transition-colors z-30 font-bold"
-                            >
-                                {isCollapsed ? '+' : '-'}
-                            </button>
-                        )}
-
-                        <div className="flex items-center justify-between gap-1 mb-2">
-                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-widest
-                                ${memberStats.level === 'Membro' 
-                                    ? 'bg-slate-800 text-gray-400' 
-                                    : 'bg-gradient-to-r from-indigo-500 to-[#4f46e5] text-white'}`}>
-                                {memberStats.vipLabel}
-                            </span>
-                            
-                            <div className="flex gap-1">
-                                {!isIndependentUser && (
-                                    <>
-                                        <button onClick={() => onEdit(memberId)} className="text-[10px] bg-slate-800/80 hover:bg-slate-700 p-1 rounded hover:text-white transition-colors" title="Editar Dados">✏️</button>
-                                        <button onClick={() => onAddSub(memberId)} className="text-[10px] bg-indigo-950/40 hover:bg-indigo-900 p-1 rounded text-indigo-400 transition-colors" title="Adicionar Indicado">➕</button>
-                                        {!isRootOfSession && (
-                                            <button onClick={() => onRemove(memberId)} className="text-[10px] bg-red-950/40 hover:bg-red-900 p-1 rounded text-red-400 transition-colors" title="Remover">🗑️</button>
-                                        )}
-                                    </>
-                                )}
-                                {isIndependentUser && (
-                                    <span className="text-[8px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-black uppercase tracking-widest" title="Conta SaaS com Gestão Própria">Parceiro Ativo</span>
-                                )}
-                            </div>
-                        </div>
-
-                        <h4 className="text-xs font-bold text-gray-100 truncate mt-1">{member.name}</h4>
-                        <p className="text-[9px] text-slate-500 font-mono mt-0.5">UID: {member.uid}</p>
-                        <p className="text-[8px] text-indigo-400 font-mono font-bold">REF: {member.refCode}</p>
-
-                        <div className="mt-2.5 pt-2 border-t border-slate-800/60 space-y-1 text-[9px] text-slate-400 bg-slate-950/50 p-2 rounded-lg">
-                            <div className="flex justify-between"><span>1º Nível (Diretos):</span><span className="font-bold text-gray-200">{memberStats.level1}</span></div>
-                            <div className="flex justify-between"><span>2º Nível (Indiretos):</span><span className="font-bold text-blue-400">{memberStats.level2}</span></div>
-                            <div className="flex justify-between"><span>3º Nível+ (Profundidade):</span><span className="font-bold text-indigo-300">{memberStats.level3Plus}</span></div>
-                            
-                            {member.email && (
-                                <div className="flex justify-between border-t border-slate-800/40 pt-1 mt-1">
-                                    <span>E-mail:</span>
-                                    <span className="font-bold text-gray-300 truncate max-w-[120px]" title={member.email}>{member.email}</span>
-                                </div>
-                            )}
-                            {member.phone && (
-                                <div className="flex justify-between">
-                                    <span>Telefone:</span>
-                                    <span className="font-bold text-gray-300 truncate max-w-[120px]" title={member.phone}>{member.phone}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mt-3 pt-2.5 border-t border-slate-850 grid grid-cols-2 gap-2 text-[10px]">
-                            <div>
-                                <span className="text-[8px] text-slate-500 block uppercase font-extrabold tracking-wider">Aporte Total</span>
-                                <span className="font-semibold text-gray-300">${totalPersonal.toLocaleString()}</span>
-                            </div>
-                            <div>
-                                <span className="text-[8px] text-slate-500 block uppercase font-extrabold tracking-wider">Vol. Equipa</span>
-                                <span className="font-semibold text-blue-400">${memberStats.teamVol.toLocaleString()}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {hasChildren && !isCollapsed && <div className="w-0.5 h-6 bg-slate-700 relative"></div>}
-
-                    {hasChildren && !isCollapsed && (
-                        <div className="flex gap-8 relative pt-2">
-                            {member.children.map((childId, index) => {
-                                const isFirst = index === 0;
-                                const isLast = index === member.children.length - 1;
-                                const isSingle = member.children.length === 1;
-                                return (
-                                    <div key={childId} className="relative flex flex-col items-center">
-                                        {!isSingle && (
-                                            <div className="absolute top-0 h-0.5 bg-slate-700" style={{ left: isFirst ? '50%' : '0', right: isLast ? '50%' : '0' }} />
-                                        )}
-                                        <div className="w-0.5 h-4 bg-slate-700 z-10"></div>
-                                        <TreeMemberCard memberId={childId} network={network} stats={stats} onEdit={onEdit} onAddSub={onAddSub} onRemove={onRemove} currentUserId={currentUserId} />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            );
-        };
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const App = () => {
-            const [session, setSession] = useState(null);
-            const [authMode, setAuthMode] = useState('login'); 
-            const [email, setEmail] = useState('');
-            const [password, setPassword] = useState('');
-            const [authError, setAuthError] = useState('');
-
-            const [network, setNetwork] = useState({});
+            const [user, setUser] = useState(null);
+            const [network, setNetwork] = useState(null);
             const [loading, setLoading] = useState(true);
-            const [activeTab, setActiveTab] = useState('dashboard');
-            const [viewMode, setViewMode] = useState('chart');
-            const [botYield, setBotYield] = useState(1.0);
-            
-            const [uplineSearch, setUplineSearch] = useState('');
-
-            const [toast, setToast] = useState({ show: false, message: '' });
-            const [showModal, setShowModal] = useState(false);
-            const [modalMode, setModalMode] = useState('add');
-            const [selectedMemberId, setSelectedMemberId] = useState('');
-            const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', action: null });
-
-            const [form, setForm] = useState({ name: '', refCode: '', uid: '', email: '', phone: '' });
-            const [formCustodias, setFormCustodias] = useState([]);
-
-            const [zoom, setZoom] = useState(1.0);
-            const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-            const [isDragging, setIsDragging] = useState(false);
-            const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-
-            const showNotification = (msg) => {
-                setToast({ show: true, message: msg });
-                setTimeout(() => setToast({ show: false, message: '' }), 4000);
-            };
-
-            const copyToClipboard = (text) => {
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                textarea.style.position = 'fixed';
-                document.body.appendChild(textarea);
-                textarea.select();
-                try {
-                    document.execCommand('copy');
-                    showNotification("UID copiado para a área de transferência!");
-                } catch (err) {
-                    console.error('Falha ao copiar:', err);
-                    showNotification("Falha ao copiar automaticamente. Selecione e copie manualmente.");
-                }
-                document.body.removeChild(textarea);
-            };
 
             useEffect(() => {
-                const client = getSupabase();
-                if (!client) { setLoading(false); return; }
-
-                client.auth.getSession().then(({ data: { session } }) => {
-                    setSession(session);
-                    if (!session) setLoading(false);
-                });
-
-                const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
-                    setSession(session);
-                    if (!session) setLoading(false);
-                });
-
-                return () => subscription?.unsubscribe();
+                client.auth.getSession().then(({ data: { session } }) => setUser(session?.user || null));
+                client.auth.onAuthStateChange((_event, session) => setUser(session?.user || null));
             }, []);
 
-            const fetchNetwork = async () => {
-                if (!session) return;
+            useEffect(() => {
+                if (user) fetchRede();
+            }, [user]);
+
+            const fetchRede = async () => {
                 setLoading(true);
-                const client = getSupabase();
-                if (!client) return;
-
-                try {
-                    const { data, error } = await client.from('simulador_rede').select('*');
-                    if (error) throw error;
-
-                    const networkObj = {};
-                    if (data) {
-                        data.forEach(item => {
-                            let custodias = item.custodias;
-                            if (!custodias || !Array.isArray(custodias)) {
-                                custodias = [{ id: 'c_' + item.id, label: 'Custódia Base', value: parseFloat(item.personal) || 0, rate: 15 }];
-                            }
-                            networkObj[item.id] = {
-                                id: item.id,
-                                userId: item.user_id,
-                                name: item.name,
-                                uid: item.uid,
-                                refCode: item.ref_code,
-                                email: item.email,
-                                phone: item.phone,
-                                patriarca_id: item.patriarca_id,
-                                custodias: custodias,
-                                children: item.children || []
-                            };
-                        });
-                    }
-
-                    const myId = session.user.id;
-                    if (!networkObj[myId]) {
-                        const baseNode = {
-                            id: myId,
-                            name: 'O Meu Perfil SaaS',
-                            uid: `UID-${myId.substring(0,6).toUpperCase()}`,
-                            refCode: `REF-${myId.substring(0,4).toUpperCase()}`,
-                            email: session.user.email,
-                            phone: '',
-                            patriarca_id: null,
-                            custodias: [{ id: 'c_main', label: 'Banca Principal', value: 0, rate: 15 }],
-                            children: [],
-                            user_id: myId
-                        };
-                        networkObj[myId] = { ...baseNode, userId: myId };
-                        await client.from('simulador_rede').upsert([baseNode]);
-                    }
-
-                    setNetwork(networkObj);
-                } catch (err) {
-                    console.error("Erro ao buscar a rede global:", err.message);
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            useEffect(() => { if (session) fetchNetwork(); }, [session]);
-
-            const handleSignUp = async (e) => {
-                e.preventDefault();
-                setAuthError('');
-                setLoading(true);
-                const { error } = await getSupabase().auth.signUp({ email, password });
-                setLoading(false);
-                if (error) setAuthError(error.message);
-                else showNotification("Registo efetuado com sucesso! Já pode iniciar sessão.");
-            };
-
-            const handleSignIn = async (e) => {
-                e.preventDefault();
-                setAuthError('');
-                setLoading(true);
-                const { error } = await getSupabase().auth.signInWithPassword({ email, password });
-                setLoading(false);
-                if (error) setAuthError(error.message);
-            };
-
-            const conectarAoPatriarca = async () => {
-                const uidLimpo = uplineSearch.trim().toUpperCase();
-                if (!uidLimpo) return showNotification("Introduza o UID exato do seu Patriarca para conectar.");
-                
-                setLoading(true);
-                const client = getSupabase();
-                
-                const { data, error } = await client.rpc('conectar_rede_patriarca', {
-                    novo_membro_id: session.user.id,
-                    termo_busca_patriarca: uidLimpo
-                });
-
-                setLoading(false);
+                const { data, error } = await client.from('simulador_rede').select('*');
                 if (error) {
-                    showNotification("Erro ao conectar: " + error.message);
-                } else if (data && data.sucesso) {
-                    showNotification("🚀 " + data.mensagem);
-                    fetchNetwork();
+                    alert("Erro ao carregar rede: " + error.message);
                 } else {
-                    showNotification("⚠️ " + (data?.mensagem || "Líder não localizado no sistema."));
+                    // Transforma array em mapa
+                    const map = {};
+                    data.forEach(n => map[n.id] = n);
+                    setNetwork(map);
+                }
+                setLoading(false);
+            };
+
+            const handleSave = async (novoMembro) => {
+                // Previne strings vazias em campos Unique
+                const payload = {
+                    ...novoMembro,
+                    uid: novoMembro.uid?.trim() || `UID-${Date.now().toString().slice(-6)}`,
+                    ref_code: novoMembro.ref_code?.trim() || `REF-${Date.now().toString().slice(-4)}`
+                };
+
+                const { error } = await client.from('simulador_rede').upsert([payload]);
+                if (error) {
+                    alert("Erro ao gravar no Supabase: " + error.message);
+                } else {
+                    alert("Dados guardados com sucesso!");
+                    fetchRede();
                 }
             };
 
-            const visibleMembers = useMemo(() => {
-                if (!session) return new Set();
-                const visible = new Set();
-                const traverseDown = (id) => {
-                    if (!id || !network[id]) return;
-                    visible.add(id);
-                    network[id].children.forEach(cid => traverseDown(cid));
-                };
-                traverseDown(session.user.id);
-                return visible;
-            }, [network, session]);
-
-            const stats = useMemo(() => {
-                if (!session || Object.keys(network).length === 0) return {};
-                const results = {};
-
-                const calculateNode = (id) => {
-                    const node = network[id];
-                    if (!node) return { teamVol: 0, directsActive: 0, level: 'Membro', vipLabel: 'V0 (Básico)', level1: 0, level2: 0, level3Plus: 0, hasVipInTree: 'Membro' };
-
-                    let teamVol = 0;
-                    let directsActive = 0;
-                    let childVips = [];
-
-                    node.children.forEach(cid => {
-                        const childStats = calculateNode(cid);
-                        const child = network[cid];
-                        if (child) {
-                            const childPersonal = getPersonalSum(child);
-                            teamVol += childPersonal + childStats.teamVol;
-                            if (childPersonal >= 100) directsActive++;
-                            childVips.push({ id: cid, level: childStats.level });
-                        }
-                    });
-
-                    let currentLevel = 'Membro';
-                    const userPersonalSum = getPersonalSum(node);
-
-                    for (const rule of VIP_RULES) {
-                        if (rule.level === 'Membro') continue;
-                        const hasPersonal = userPersonalSum >= rule.reqPersonal;
-                        const hasTeamVol = teamVol >= rule.reqTeamVol;
-                        const hasDirects = directsActive >= rule.reqDirects;
-                        let hasVipLines = rule.prevVip ? (childVips.filter(cv => cv.level === rule.prevVip || results[cv.id]?.hasVipInTree === rule.prevVip).length >= 2) : true;
-
-                        if (hasPersonal && hasTeamVol && hasDirects && hasVipLines) {
-                            currentLevel = rule.level;
-                            break;
-                        }
-                    }
-
-                    let level1 = 0, level2 = 0, level3Plus = 0;
-                    const traverseDepths = (nodeId, depth) => {
-                        const targetNode = network[nodeId];
-                        if (!targetNode) return;
-                        targetNode.children.forEach(cid => {
-                            if (depth === 1) level1++;
-                            else if (depth === 2) level2++;
-                            else level3Plus++;
-                            traverseDepths(cid, depth + 1);
-                        });
-                    };
-                    traverseDepths(id, 1);
-
-                    results[id] = {
-                        teamVol, directsActive, level: currentLevel,
-                        vipLabel: currentLevel === 'Membro' ? 'V0 (Básico)' : `V${currentLevel.replace('VIP', '')}`,
-                        level1, level2, level3Plus,
-                        hasVipInTree: currentLevel === 'Membro' ? (childVips.some(cv => results[cv.id]?.hasVipInTree !== 'Membro') ? 'VIP1' : 'Membro') : currentLevel
-                    };
-                    return results[id];
-                };
-
-                if (network[session.user.id]) calculateNode(session.user.id);
-                return results;
-            }, [network, session]);
-
-            const earnings = useMemo(() => {
-                let direct = 0, indirect = 0, diff = 0, matchingSameLevel = 0;
-                if (!session || !stats[session.user.id]) return { personalDaily: 0, personalMonthly: 0, direct: 0, indirect: 0, diff: 0, matchingSameLevel: 0, teamDaily: 0, totalDaily: 0, totalMonthly: 0 };
-
-                const rootId = session.user.id;
-                const myRate = VIP_RULES.find(r => r.level === stats[rootId]?.level)?.rate || 0;
-                const personalMonthlyProfit = getMonthlyYield(network[rootId]);
-                const personalDailyProfit = personalMonthlyProfit / 30;
-
-                const traverse = (id, depth = 0) => {
-                    const userNode = network[id];
-                    if (!userNode) return;
-                    
-                    if (id !== rootId) {
-                        const userMonthlyYield = getMonthlyYield(userNode);
-                        const userDailyYield = userMonthlyYield / 30;
-
-                        if (depth === 1) direct += userDailyYield * 0.10;
-                        else if (depth === 2) indirect += userDailyYield * 0.05;
-
-                        const dailyBotYield = getPersonalSum(userNode) * (botYield / 100);
-                        const userRate = VIP_RULES.find(r => r.level === stats[id]?.level)?.rate || 0;
-                        
-                        if (myRate > userRate) diff += dailyBotYield * (myRate - userRate);
-                        else if (myRate === userRate && myRate > 0) matchingSameLevel += (stats[id]?.teamVol || 0) * (botYield / 100) * 0.10 * 0.20;
-                    }
-                    userNode.children.forEach(cid => traverse(cid, depth + 1));
-                };
-
-                traverse(rootId);
-                const teamDaily = direct + indirect + diff + matchingSameLevel;
-                return {
-                    personalDaily: personalDailyProfit, personalMonthly: personalMonthlyProfit,
-                    direct, indirect, diff, matchingSameLevel, teamDaily,
-                    totalDaily: personalDailyProfit + teamDaily, totalMonthly: (personalDailyProfit * 30) + (teamDaily * 30)
-                };
-            }, [network, stats, botYield, session]);
-
-            const roadmap = useMemo(() => {
-                if (!session || !stats[session.user.id]) return null;
-                const currentLevel = stats[session.user.id]?.level || 'Membro';
-                if (currentLevel === 'VIP6') return null;
-                const currentIndex = VIP_RULES.findIndex(r => r.level === currentLevel);
-                const nextRule = VIP_RULES[currentIndex - 1];
-                const activePersonalSum = getPersonalSum(network[session.user.id]);
-                return {
-                    nextLevel: nextRule.level,
-                    personal: { req: nextRule.reqPersonal, current: activePersonalSum, done: activePersonalSum >= nextRule.reqPersonal },
-                    teamVol: { req: nextRule.reqTeamVol, current: stats[session.user.id]?.teamVol || 0, done: (stats[session.user.id]?.teamVol || 0) >= nextRule.reqTeamVol },
-                    directs: { req: nextRule.reqDirects, current: stats[session.user.id]?.directsActive || 0, done: (stats[session.user.id]?.directsActive || 0) >= nextRule.reqDirects }
-                };
-            }, [network, stats, session]);
-
-            const handleSaveMember = async () => {
-                if (!form.name) return showNotification("O nome é obrigatório.");
-                const client = getSupabase();
-                let updatedNetwork = { ...network };
-
-                const finalUid = (form.uid || `UID-${Date.now().toString().slice(-4)}`).trim().toUpperCase();
-
-                if (modalMode === 'add') {
-                    const newId = `node_${Date.now()}`;
-                    const newNode = {
-                        id: newId, 
-                        name: form.name, 
-                        uid: finalUid,
-                        ref_code: form.refCode, 
-                        email: form.email, 
-                        phone: form.phone,
-                        custodias: formCustodias, 
-                        children: [], 
-                        user_id: session.user.id, 
-                        patriarca_id: selectedMemberId
-                    };
-                    
-                    updatedNetwork[selectedMemberId].children.push(newId);
-                    updatedNetwork[newId] = { ...newNode, userId: session.user.id, refCode: form.refCode };
-                    setNetwork(updatedNetwork);
-
-                    try {
-                        await client.from('simulador_rede').upsert([newNode]);
-                        await client.from('simulador_rede').update({ children: updatedNetwork[selectedMemberId].children }).eq('id', selectedMemberId);
-                        showNotification("Membro registado e conectado com sucesso!");
-                    } catch (e) { showNotification("Gravado localmente. Falha ao enviar para a nuvem."); }
-                } else {
-                    updatedNetwork[selectedMemberId] = { 
-                        ...updatedNetwork[selectedMemberId], 
-                        name: form.name, 
-                        uid: finalUid, 
-                        refCode: form.refCode, 
-                        email: form.email, 
-                        phone: form.phone, 
-                        custodias: formCustodias 
-                    };
-                    setNetwork(updatedNetwork);
-                    try {
-                        await client.from('simulador_rede').update({ 
-                            name: form.name, 
-                            uid: finalUid, 
-                            ref_code: form.refCode, 
-                            email: form.email, 
-                            phone: form.phone, 
-                            custodias: formCustodias 
-                        }).eq('id', selectedMemberId);
-                        showNotification("Dados atualizados com sucesso!");
-                    } catch (e) { showNotification("Atualizado localmente. Falha ao enviar para a nuvem."); }
-                }
-                setShowModal(false);
-            };
-
-            const handleRemoveMember = (id) => {
-                if (id === session.user.id) return showNotification("Ação bloqueada. Não pode remover o seu próprio nó primário.");
-                if (network[id].userId !== session.user.id) return showNotification("Sem permissão. Este nó pertence a um parceiro SaaS independente.");
-
-                setConfirmModal({
-                    show: true, title: "Excluir Nó e Ramificação",
-                    message: `Tem a certeza que deseja eliminar "${network[id]?.name}"? Esta ação removerá definitivamente toda a ramificação subsequente da nuvem.`,
-                    action: async () => {
-                        let updatedNetwork = { ...network };
-                        let parentId = Object.keys(updatedNetwork).find(k => updatedNetwork[k].children.includes(id));
-
-                        if (parentId) updatedNetwork[parentId].children = updatedNetwork[parentId].children.filter(cid => cid !== id);
-
-                        const deletedIds = [];
-                        const cleanNodes = (nodeId) => {
-                            if (updatedNetwork[nodeId]) {
-                                updatedNetwork[nodeId].children.forEach(cleanNodes);
-                                deletedIds.push(nodeId);
-                                delete updatedNetwork[nodeId];
-                            }
-                        };
-                        cleanNodes(id);
-                        setNetwork(updatedNetwork);
-
-                        const client = getSupabase();
-                        try {
-                            if (parentId) await client.from('simulador_rede').update({ children: updatedNetwork[parentId].children }).eq('id', parentId);
-                            await client.from('simulador_rede').delete().in('id', deletedIds).eq('user_id', session.user.id);
-                            showNotification("Nó e ramificação removidos com sucesso.");
-                        } catch (e) { showNotification("Erro ao excluir dados da nuvem."); }
-                    }
-                });
-            };
-
-            const openAddModal = (parentId) => {
-                setModalMode('add'); setSelectedMemberId(parentId);
-                setForm({ name: '', refCode: '', uid: '', email: '', phone: '' });
-                setFormCustodias([{ id: 'c_' + Date.now(), label: 'Nova Custódia', value: 100, rate: 15 }]);
-                setShowModal(true);
-            };
-
-            const openEditModal = (id) => {
-                if (network[id].userId !== session.user.id) return showNotification("Não pode gerenciar finanças de um utilizador independente.");
-                setModalMode('edit'); setSelectedMemberId(id);
-                const m = network[id];
-                setForm({ 
-                    name: m.name, 
-                    refCode: m.refCode || '', 
-                    uid: m.uid || '', 
-                    email: m.email || '', 
-                    phone: m.phone || '' 
-                });
-                setFormCustodias(m.custodias ? [...m.custodias] : [{ id: 'c_' + Date.now(), label: 'Custódia Ativa', value: 0, rate: 15 }]);
-                setShowModal(true);
-            };
-
-            const handleMouseEvents = {
-                onMouseDown: (e) => { if (!e.target.closest('button')) { setIsDragging(true); setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y }); } },
-                onMouseMove: (e) => { if (isDragging) setPanOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }); },
-                onMouseUp: () => setIsDragging(false),
-                onMouseLeave: () => setIsDragging(false)
-            };
-
-            if (!session) {
-                return (
-                    <div className="min-h-screen bg-[#05070e] flex items-center justify-center p-4">
-                        <div className="bg-[#0b0e1a] border border-[#1c273e] p-8 rounded-3xl max-w-md w-full space-y-6 shadow-2xl relative">
-                            <div className="text-center">
-                                <span className="p-3.5 bg-gradient-to-r from-emerald-500 to-indigo-600 rounded-2xl text-white font-extrabold text-2xl inline-block mb-3 shadow-lg shadow-indigo-950/50">BX</span>
-                                <h2 className="text-2xl font-black text-white">Rede Global Bitradex</h2>
-                                <p className="text-xs text-gray-400 mt-1">{authMode === 'login' ? 'Entre e controle o seu crescimento' : 'Registe-se e integre o ecossistema'}</p>
-                            </div>
-                            {authError && <div className="bg-red-950/40 border border-red-900 text-red-400 p-3 rounded-xl text-xs text-center font-bold">⚠️ {authError}</div>}
-                            <form onSubmit={authMode === 'login' ? handleSignIn : handleSignUp} className="space-y-4">
-                                <div>
-                                    <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">E-mail</label>
-                                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Palavra-passe</label>
-                                    <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" />
-                                </div>
-                                <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg text-sm">{authMode === 'login' ? 'Iniciar Sessão' : 'Criar Conta'}</button>
-                            </form>
-                            <div className="text-center text-xs">
-                                <button type="button" onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="text-indigo-400 hover:underline">{authMode === 'login' ? 'Não tem conta? Registe-se' : 'Já tem conta? Faça login'}</button>
-                            </div>
-                        </div>
-                    </div>
-                );
-            }
-
-            if (loading && Object.keys(network).length === 0) {
-                return (
-                    <div className="flex-1 flex flex-col items-center justify-center bg-[#05070e] text-gray-400 space-y-4">
-                        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-sm font-semibold tracking-wide">A carregar a rede global...</p>
-                    </div>
-                );
-            }
-
-            const me = network[session.user.id];
+            if (!user) return (
+                <div className="flex flex-col items-center justify-center h-screen text-white">
+                    <h1 className="text-3xl font-black mb-6">Bitradex Login</h1>
+                    <button 
+                        onClick={() => client.auth.signInAnonymously()}
+                        className="bg-indigo-600 px-8 py-3 rounded-xl font-bold"
+                    >
+                        Entrar como Convidado
+                    </button>
+                </div>
+            );
 
             return (
-                <div className="flex-1 flex flex-col min-h-screen bg-[#05070e]">
-                    <header className="bg-[#0b0e1a] border-b border-[#1b253b] px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-40">
-                        <div className="flex items-center gap-3">
-                            <span className="p-2.5 bg-gradient-to-r from-emerald-500 to-indigo-600 rounded-xl text-white font-extrabold text-lg tracking-wider shadow-lg shadow-indigo-950/40">BX</span>
-                            <div>
-                                <h1 className="text-lg font-black tracking-tight text-white flex items-center gap-2">Painel Bitradex <span className="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-extrabold">SaaS Pro</span></h1>
-                                <p className="text-xs text-gray-400 font-medium">Conta de Rede Isolada: {session.user.email}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => getSupabase().auth.signOut()} className="bg-slate-800 hover:bg-slate-700 text-gray-300 text-xs font-bold px-4 py-2 rounded-xl transition-all">Sair da Conta</button>
-                        </div>
-                    </header>
-
-                    <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        <div className="lg:col-span-1 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
-                            <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex-1 lg:flex-initial ${activeTab === 'dashboard' ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg' : 'bg-[#0b0e1a] text-gray-400 border border-[#172136]'}`}><Icons.Dashboard /> Painel Geral</button>
-                            <button onClick={() => setActiveTab('network')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex-1 lg:flex-initial ${activeTab === 'network' ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg' : 'bg-[#0b0e1a] text-gray-400 border border-[#172136]'}`}><Icons.Network /> Minha Rede</button>
-                            <button onClick={() => setActiveTab('calculator')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex-1 lg:flex-initial ${activeTab === 'calculator' ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg' : 'bg-[#0b0e1a] text-gray-400 border border-[#172136]'}`}><Icons.Calculator /> Calc. Lucros</button>
-                        </div>
-
-                        <div className="lg:col-span-3 space-y-6">
-                            {toast.show && (
-                                <div className="bg-indigo-950 border border-indigo-700/80 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3">
-                                    <span className="w-2.5 h-2.5 bg-indigo-400 rounded-full animate-ping"></span>
-                                    <p className="text-xs font-semibold">{toast.message}</p>
-                                </div>
-                            )}
-
-                            {activeTab === 'dashboard' && (
-                                <div className="space-y-6">
-                                    {me && (
-                                        <div className="bg-[#0b0e1a] border border-indigo-900/40 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                            <div>
-                                                <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest">O Seu UID de Indicação</h3>
-                                                <p className="text-xs text-gray-400 mt-1">Partilhe este UID exato para novos indicados conectarem-se diretamente a si:</p>
-                                            </div>
-                                            <div className="flex items-center gap-2 w-full md:w-auto">
-                                                <span className="bg-slate-950 border border-slate-800 text-white font-mono font-bold px-4 py-2 rounded-xl text-sm select-all">
-                                                    {me.uid}
-                                                </span>
-                                                <button 
-                                                    onClick={() => copyToClipboard(me.uid)}
-                                                    className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-95"
-                                                >
-                                                    Copiar UID
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {me && !me.patriarca_id && (
-                                        <div className="bg-gradient-to-r from-[#111827] to-[#0f152e] border border-blue-900/50 p-6 rounded-2xl relative shadow-xl overflow-hidden">
-                                            <div className="absolute -right-10 -top-10 opacity-10"><Icons.Link className="w-40 h-40" /></div>
-                                            <h3 className="text-md font-bold text-blue-400 mb-2 flex items-center gap-2"><Icons.Link /> Ligar ao Patriarca via UID</h3>
-                                            <p className="text-xs text-gray-400 mb-4 max-w-lg">
-                                                A sua conta atualmente é independente. Para se associar à equipe de um líder e permitir a qualificação de carreira, insira o **UID exato** do seu Patriarca abaixo.
-                                            </p>
-                                            
-                                            <div className="flex gap-2">
-                                                <input 
-                                                    type="text" 
-                                                    value={uplineSearch} 
-                                                    onChange={(e) => setUplineSearch(e.target.value)} 
-                                                    placeholder="Ex: UID-XXXXXX" 
-                                                    className="w-full max-w-xs bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-gray-200 uppercase font-mono tracking-wider focus:outline-none focus:border-blue-500"
-                                                />
-                                                <button onClick={conectarAoPatriarca} className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all shadow-lg font-bold">Vincular Redes</button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {me && me.patriarca_id && (
-                                        <div className="bg-[#0b0e1a] border border-emerald-900/30 p-4 rounded-2xl flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <span className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><Icons.Check /></span>
-                                                <div>
-                                                    <h3 className="text-xs font-bold text-emerald-400">Vinculado ao Patriarca</h3>
-                                                    <p className="text-[10px] text-gray-500 font-medium">O seu nó e volume sobem corretamente para a equipe superior na hierarquia.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
-                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Qualificação Ativa</p>
-                                            <p className="text-3xl font-extrabold text-white mt-2 flex items-center gap-2">{stats[session.user.id]?.vipLabel || 'V0'}</p>
-                                        </div>
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
-                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Volume de Equipa</p>
-                                            <p className="text-3xl font-extrabold text-blue-400 mt-2">${(stats[session.user.id]?.teamVol || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                                        </div>
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
-                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">O Meu Aporte</p>
-                                            <p className="text-3xl font-extrabold text-emerald-400 mt-2">${getPersonalSum(network[session.user.id]).toLocaleString()}</p>
-                                        </div>
-                                    </div>
-
-                                    {roadmap && (
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl p-6">
-                                            <h3 className="text-sm font-bold text-gray-200 mb-4 flex items-center gap-2"><Icons.Lock /> Requisitos para {roadmap.nextLevel.replace('VIP', 'V')}</h3>
-                                            <div className="space-y-3">
-                                                <div className="bg-[#12192c] p-4 rounded-xl flex justify-between items-center text-xs">
-                                                    <div><h4 className="font-bold text-gray-300">Investimento Pessoal</h4><p className="text-gray-500 mt-1">Acumulado: ${roadmap.personal.current.toLocaleString()} de ${roadmap.personal.req.toLocaleString()}</p></div>
-                                                    {roadmap.personal.done ? <Icons.Check /> : <span className="text-amber-500 font-bold">Falta ${roadmap.personal.req - roadmap.personal.current}</span>}
-                                                </div>
-                                                <div className="bg-[#12192c] p-4 rounded-xl flex justify-between items-center text-xs">
-                                                    <div><h4 className="font-bold text-gray-300">Volume de Equipa</h4><p className="text-gray-500 mt-1">Atual: ${roadmap.teamVol.current.toLocaleString()} de ${roadmap.teamVol.req.toLocaleString()}</p></div>
-                                                    {roadmap.teamVol.done ? <Icons.Check /> : <span className="text-amber-500 font-bold">Falta ${roadmap.teamVol.req - roadmap.teamVol.current}</span>}
-                                                </div>
-                                                <div className="bg-[#12192c] p-4 rounded-xl flex justify-between items-center text-xs">
-                                                    <div><h4 className="font-bold text-gray-300">Diretos Ativos</h4><p className="text-gray-500 mt-1">Com aporte ≥ $100: {roadmap.directs.current} de {roadmap.directs.req}</p></div>
-                                                    {roadmap.directs.done ? <Icons.Check /> : <span className="text-amber-500 font-bold">Falta {roadmap.directs.req - roadmap.directs.current} diretos</span>}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {activeTab === 'network' && (
-                                <div className="space-y-4">
-                                    <div className="flex flex-col md:flex-row justify-between bg-[#0b0e1a] p-4 border border-[#161f35] rounded-2xl gap-4">
-                                        <div>
-                                            <h3 className="text-sm font-bold text-gray-300">A Sua Equipa</h3>
-                                            <p className="text-[10px] text-gray-500 mt-0.5">Visão isolada e segura do seu ecossistema. Outras linhas paralelas não são visíveis aqui.</p>
-                                        </div>
-                                        <div className="bg-slate-950 p-1 rounded-xl flex border border-slate-800">
-                                            <button onClick={() => setViewMode('table')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'text-gray-400'}`}>Tabela CRM</button>
-                                            <button onClick={() => setViewMode('chart')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'chart' ? 'bg-indigo-600 text-white' : 'text-gray-400'}`}>Árvore Gráfica</button>
-                                        </div>
-                                        <button onClick={() => openAddModal(session.user.id)} className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-2 rounded-xl font-bold transition-all">Novo Indicado Manual</button>
-                                    </div>
-
-                                    {viewMode === 'table' ? (
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl overflow-hidden shadow-xl overflow-x-auto">
-                                            <table className="w-full text-left">
-                                                <thead className="bg-[#12192c]">
-                                                    <tr className="text-[10px] text-gray-400 uppercase font-black">
-                                                        <th className="p-3">Membro (Hierarquia)</th>
-                                                        <th className="p-3">Aporte Total</th>
-                                                        <th className="p-3 text-right">Volume</th>
-                                                        <th className="p-3">E-mail / Telefone</th>
-                                                        <th className="p-3 text-center font-mono">Níveis 1/2/3+</th>
-                                                        <th className="p-3 text-center">Nível VIP</th>
-                                                        <th className="p-3 text-right">Ações</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {Object.keys(network).filter(key => visibleMembers.has(key)).map(key => {
-                                                        const user = network[key];
-                                                        const userStats = stats[key];
-                                                        if (!user || !userStats) return null;
-
-                                                        const isRoot = key === session.user.id;
-                                                        const isIndependent = user.userId !== session.user.id && !isRoot;
-                                                        const isDirectOfRoot = network[session.user.id]?.children.includes(key);
-                                                        let indent = isRoot ? 0 : (isDirectOfRoot ? 1 : 2);
-
-                                                        return (
-                                                            <tr key={key} className="border-b border-slate-800/40 hover:bg-slate-800/20">
-                                                                <td className="p-3 whitespace-nowrap" style={{ paddingLeft: `${indent * 20 + 12}px` }}>
-                                                                    <div className="flex items-center text-xs font-bold text-gray-200">
-                                                                        <span className={`w-1.5 h-1.5 rounded-full mr-2 ${isRoot ? 'bg-indigo-500' : (isIndependent ? 'bg-emerald-500' : 'bg-gray-500')}`}></span>
-                                                                        {user.name} {isIndependent && <span className="ml-2 text-[8px] bg-emerald-900/40 text-emerald-400 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">Parceiro</span>}
-                                                                    </div>
-                                                                    <div className="text-[9px] text-gray-500 ml-3.5 mt-0.5 font-medium">UID: {user.uid} | Ref: {user.refCode}</div>
-                                                                </td>
-                                                                <td className="p-3 text-xs font-bold text-gray-200">${getPersonalSum(user).toLocaleString()}</td>
-                                                                <td className="p-3 text-xs text-right font-mono text-blue-400 font-bold">${userStats.teamVol.toLocaleString()}</td>
-                                                                <td className="p-3 text-xs text-gray-300">
-                                                                    <div className="truncate max-w-[150px] font-medium" title={user.email}>{user.email || 'N/D'}</div>
-                                                                    <div className="text-[10px] text-gray-500 mt-0.5">{user.phone || 'N/D'}</div>
-                                                                </td>
-                                                                <td className="p-3 text-[10px] text-center whitespace-nowrap font-mono text-gray-400">{userStats.level1} / {userStats.level2} / {userStats.level3Plus}</td>
-                                                                <td className="p-3 text-center"><span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-600/20 text-indigo-400">{userStats.vipLabel}</span></td>
-                                                                <td className="p-3 text-right">
-                                                                    <div className="flex justify-end gap-2 text-xs">
-                                                                        {!isIndependent && <button onClick={() => openEditModal(key)} className="text-gray-400 hover:text-amber-400 font-bold px-2 py-1 bg-slate-800 rounded">Editar</button>}
-                                                                        {!isIndependent && <button onClick={() => openAddModal(key)} className="text-gray-300 hover:text-indigo-400 font-bold px-2 py-1 bg-slate-800 rounded">+ Sub</button>}
-                                                                        {!isRoot && !isIndependent && <button onClick={() => handleRemoveMember(key)} className="text-gray-500 hover:text-red-400 px-2">🗑️</button>}
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl shadow-xl p-4 overflow-hidden relative">
-                                            <div className="absolute bottom-6 right-6 z-30 flex items-center gap-2 bg-slate-900/95 p-2 rounded-xl border border-slate-800 shadow-2xl">
-                                                <button onClick={() => setZoom(z => Math.min(2.0, z + 0.1))} className="w-8 h-8 rounded-lg bg-indigo-600/30 text-indigo-300 font-black">＋</button>
-                                                <span className="text-xs text-gray-300 font-bold font-mono px-1 w-12 text-center select-none">{Math.round(zoom * 100)}%</span>
-                                                <button onClick={() => setZoom(z => Math.max(0.4, z - 0.1))} className="w-8 h-8 rounded-lg bg-indigo-600/30 text-indigo-300 font-black">－</button>
-                                                <button onClick={() => { setZoom(1.0); setPanOffset({ x: 0, y: 0 }); }} className="text-[10px] bg-slate-800 text-gray-300 px-3 py-1.5 rounded-lg font-bold">Centrar</button>
-                                            </div>
-                                            <div className={`relative bg-slate-950/40 rounded-xl border border-slate-900 min-h-[620px] select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} overflow-hidden`} {...handleMouseEvents}>
-                                                <div className="absolute inset-0 flex justify-center items-start pt-16 transition-transform duration-75 ease-out" style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: 'top center' }}>
-                                                    <div className="inline-block pointer-events-auto">
-                                                        <TreeMemberCard memberId={session.user.id} network={network} stats={stats} onEdit={openEditModal} onAddSub={openAddModal} onRemove={handleRemoveMember} currentUserId={session.user.id} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {activeTab === 'calculator' && (
-                                <div className="space-y-6 bg-[#0b0e1a] border border-[#161f35] rounded-2xl p-6 shadow-xl">
-                                    <h3 className="text-md font-bold text-gray-200">Projeção Financeira sobre a Sua Rede</h3>
-                                    <div className="bg-[#12192c] p-4 rounded-xl border border-slate-800">
-                                        <div className="flex justify-between items-center text-xs mb-3">
-                                            <span className="font-bold text-gray-300">Rendimento Diário do AI Bot na Equipe</span>
-                                            <span className="bg-indigo-600 text-white font-black px-2 py-1 rounded">{botYield}%</span>
-                                        </div>
-                                        <input type="range" min="0.5" max="3.0" step="0.1" value={botYield} onChange={(e) => setBotYield(parseFloat(e.target.value))} className="w-full accent-indigo-600 bg-gray-800 h-2 rounded-lg cursor-pointer" />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4 text-center font-mono">
-                                        <div className="bg-[#0a1d37] border border-blue-900/60 p-5 rounded-2xl">
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold mb-2">Lucro Pessoal (Diário)</p>
-                                            <p className="text-2xl font-black text-emerald-400">${earnings.personalDaily.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                                        </div>
-                                        <div className="bg-slate-950 border border-slate-900 p-5 rounded-2xl">
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold mb-2">Comissões de Rede (Diário)</p>
-                                            <p className="text-2xl font-black text-indigo-400">${earnings.teamDaily.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                                        </div>
-                                    </div>
-                                    <div className="bg-gradient-to-r from-indigo-950 to-[#0e172a] p-6 rounded-2xl border border-indigo-900/40 text-center font-mono">
-                                        <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2">Estimativa Mensal Acumulada</p>
-                                        <p className="text-4xl font-black text-emerald-400">${earnings.totalMonthly.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </main>
-
-                    {showModal && (
-                        <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-                            <div className="bg-[#0b0e1a] border border-[#1c273e] rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
-                                <h3 className="font-bold text-lg text-gray-200 border-b border-slate-800 pb-3">
-                                    {modalMode === 'add' ? 'Adicionar Ligação Manual' : `Editar: ${form.name}`}
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="col-span-1 md:col-span-2">
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Nome Completo *</label>
-                                        <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Código Ref</label>
-                                        <input type="text" value={form.refCode} onChange={e => setForm({...form, refCode: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Código UID * (Estrito)</label>
-                                        <input type="text" value={form.uid} onChange={e => setForm({...form, uid: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500 font-mono uppercase" placeholder="UID-XXXXXX" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">E-mail de Contacto</label>
-                                        <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" placeholder="exemplo@email.com" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Telefone / Telemóvel</label>
-                                        <input type="text" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" placeholder="+351 900 000 000" />
-                                    </div>
-                                    
-                                    <div className="col-span-1 md:col-span-2 bg-[#12192c] p-4 rounded-xl border border-slate-800 space-y-3 mt-2">
-                                        <div className="flex justify-between items-center"><h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Custódias da Conta</h4></div>
-                                        {formCustodias.map((cust, idx) => (
-                                            <div key={cust.id} className="bg-slate-950 p-3 rounded-lg border border-slate-800/80 flex flex-col gap-2 relative">
-                                                <button onClick={() => { if(formCustodias.length>1) setFormCustodias(formCustodias.filter(c => c.id !== cust.id)) }} className="absolute top-2 right-2 text-red-500 text-[10px] font-bold">Remover</button>
-                                                <div className="grid grid-cols-12 gap-2 mt-2">
-                                                    <div className="col-span-6"><label className="block text-[8px] text-gray-500 uppercase font-black mb-1">Rótulo</label><input type="text" value={cust.label} onChange={(e) => { const u = [...formCustodias]; u[idx].label = e.target.value; setFormCustodias(u); }} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-gray-200" /></div>
-                                                    <div className="col-span-3"><label className="block text-[8px] text-gray-500 uppercase font-black mb-1">Aporte($)</label><input type="number" value={cust.value} onChange={(e) => { const u = [...formCustodias]; u[idx].value = parseFloat(e.target.value)||0; setFormCustodias(u); }} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-gray-200" /></div>
-                                                    <div className="col-span-3"><label className="block text-[8px] text-gray-500 uppercase font-black mb-1">Taxa(%)</label><input type="number" value={cust.rate} onChange={(e) => { const u = [...formCustodias]; u[idx].rate = parseFloat(e.target.value)||0; setFormCustodias(u); }} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-gray-200" /></div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        <button onClick={() => setFormCustodias([...formCustodias, { id: 'c_' + Date.now(), label: 'Nova Custódia', value: 100, rate: 15 }])} className="w-full border border-dashed border-indigo-500/40 text-indigo-400 py-2 rounded-xl text-xs font-bold">+ Adicionar Banca</button>
-                                    </div>
-                                </div>
-                                <div className="flex gap-3 justify-end pt-4 border-t border-slate-850">
-                                    <button onClick={() => setShowModal(false)} className="bg-slate-950 text-gray-400 border border-slate-800 px-5 py-2.5 rounded-xl text-xs font-bold">Cancelar</button>
-                                    <button onClick={handleSaveMember} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl shadow-lg text-xs font-bold">Gravar e Sincronizar</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {confirmModal.show && (
-                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-                            <div className="bg-[#0b0e1a] border border-red-900 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
-                                <h3 className="font-bold text-lg text-red-400">⚠️ {confirmModal.title}</h3>
-                                <p className="text-sm text-gray-300">{confirmModal.message}</p>
-                                <div className="flex gap-3 justify-end pt-2">
-                                    <button onClick={() => setConfirmModal({ show: false, title: '', message: '', action: null })} className="bg-slate-800 text-gray-300 px-4 py-2 rounded-xl text-xs font-bold">Cancelar</button>
-                                    <button onClick={() => { confirmModal.action(); setConfirmModal({ show: false, title: '', message: '', action: null }); }} className="bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold">Confirmar</button>
-                                </div>
-                            </div>
+                <div className="p-8 text-white">
+                    <h1 className="text-2xl font-black mb-4">Bem-vindo, {user.email || 'Convidado'}</h1>
+                    {loading ? <p>A carregar rede...</p> : (
+                        <div className="bg-slate-900 p-6 rounded-xl">
+                            <h2 className="font-bold mb-4">A sua rede no banco de dados:</h2>
+                            <pre className="text-xs bg-black p-4 rounded">{JSON.stringify(network, null, 2)}</pre>
+                            <button 
+                                onClick={() => handleSave({id: user.id, name: 'Teste Novo', uid: '', ref_code: ''})}
+                                className="mt-4 bg-emerald-600 px-4 py-2 rounded font-bold"
+                            >
+                                Adicionar Membro de Teste (Auto UID)
+                            </button>
                         </div>
                     )}
                 </div>
