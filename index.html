@@ -3,36 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Bitradex - Gerenciamento de Rede Pro</title>
-    <!-- Tailwind CSS para design de alta fidelidade -->
+    <title>Painel Bitradex - Rede Global Interligada</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- React e ReactDOM (Versões estáveis UMD) -->
+    <!-- React e ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    
-    <!-- Babel Standalone para JSX no Browser -->
+    <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js" crossorigin></script>
-    
-    <!-- SDK Oficial do Supabase em formato UMD (ESSENCIAL PARA EVITAR TELA PRETA) -->
+    <!-- Supabase UMD (Fixo e Estável) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    
-    <!-- SheetJS para exportação Excel de alta fidelidade -->
+    <!-- SheetJS -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: #03050a; 
-            color: #f3f4f6; 
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #03050a; color: #f3f4f6; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
-        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -41,17 +30,13 @@
     <script type="text/babel" data-presets="react">
         const { useState, useMemo, useEffect } = React;
 
-        // =========================================================================
-        // CREDENCIAIS INTEGRADAS DO SEU PROJETO SUPABASE
-        // =========================================================================
         if (!window.SUPABASE_URL) window.SUPABASE_URL = "https://ntqiunpljjehuiqdjetc.supabase.co";
         if (!window.SUPABASE_ANON_KEY) window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50cWl1bnBsamplaHVpcWRqZXRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjY0NDAsImV4cCI6MjA5NzgwMjQ0MH0.N39lOduuu-pLysAWP6t0PSe6HFdmQELYXsXJ7IwDwpY";
         
         const getSupabase = () => {
             if (window.supabaseClient) return window.supabaseClient;
-            // O CDN do jsDelivr em formato UMD injeta a biblioteca em window.supabase
             const lib = window.supabase || window.Supabase;
-            if (lib && window.SUPABASE_URL && window.SUPABASE_URL.indexOf("SEU_PROJETO") === -1) {
+            if (lib && window.SUPABASE_URL) {
                 try {
                     window.supabaseClient = lib.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
                     return window.supabaseClient;
@@ -68,10 +53,9 @@
             Calculator: () => (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="4" y="4" width="16" height="16" rx="2" /><line x1="9" y1="9" x2="15" y2="9" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" /></svg>),
             Check: () => (<svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>),
             Lock: () => (<svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>),
-            Plus: () => (<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>),
-            Trash: () => (<svg className="w-4 h-4 text-red-400 hover:text-red-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>),
-            Edit: () => (<svg className="w-4 h-4 text-amber-400 hover:text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>),
-            Crown: () => (<svg className="w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138z" /></svg>)
+            Trash: () => (<svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>),
+            Edit: () => (<svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>),
+            Link: () => (<svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>)
         };
 
         const VIP_RULES = [
@@ -94,140 +78,6 @@
             return user.custodias.reduce((sum, c) => sum + ((parseFloat(c.value) || 0) * ((parseFloat(c.rate) || 0) / 100)), 0);
         };
 
-        const migrateNetworkData = (rawNetwork) => {
-            const migrated = { ...rawNetwork };
-            Object.keys(migrated).forEach(key => {
-                const u = migrated[key];
-                if (u && (!u.custodias || !Array.isArray(u.custodias))) {
-                    u.custodias = [
-                        { id: 'c_mig_' + key, label: 'Custódia Bitradex', value: parseFloat(u.personal) || 0, rate: 15 }
-                    ];
-                }
-            });
-            return migrated;
-        };
-
-        const getFactoryCleanState = () => {
-            return {
-                'root': { 
-                    id: 'root', 
-                    name: 'Você (Investidor Primário)', 
-                    uid: 'UID-MASTER', 
-                    refCode: 'REF-MASTER', 
-                    email: 'lider@email.com', 
-                    phone: '+351 900 000 000', 
-                    custodias: [
-                        { id: 'c_root_1', label: 'Custódia Fixo 15%', value: 2200, rate: 15 }
-                    ],
-                    children: ['B', 'C', 'D', 'E', 'F'] 
-                },
-                'patriarca': {
-                    id: 'patriarca',
-                    name: 'Patriarca Bitradex',
-                    uid: 'UID-PATRIARCA',
-                    refCode: 'REF-PATRIARCA',
-                    email: 'patriarca@bitradex.com',
-                    phone: '+351 999 999 999',
-                    custodias: [
-                        { id: 'c_pat_1', label: 'Banca Master High-Yield', value: 5000, rate: 15 }
-                    ],
-                    children: ['root', 'b_independent_leg']
-                },
-                'b_independent_leg': {
-                    id: 'b_independent_leg',
-                    name: 'Linha Independente B (Parceiro Externo)',
-                    uid: 'UID-LEG-B',
-                    refCode: 'REF-LEGB',
-                    email: 'parceiro@bitradex.com',
-                    phone: '+351 911 111 111',
-                    custodias: [
-                        { id: 'c_leg_1', label: 'Custódia Base', value: 300, rate: 15 }
-                    ],
-                    children: []
-                },
-                'B': {
-                    id: 'B',
-                    name: 'Indicado Direto B',
-                    uid: 'UID-B001',
-                    refCode: 'REF-B001',
-                    email: 'b@bitradex.com',
-                    phone: '+351 912 000 001',
-                    custodias: [{ id: 'cb1', label: 'Banca Standard', value: 4992, rate: 15 }],
-                    children: ['B1', 'B2']
-                },
-                'C': {
-                    id: 'C',
-                    name: 'Indicado Direto C',
-                    uid: 'UID-C001',
-                    refCode: 'REF-C001',
-                    email: 'c@bitradex.com',
-                    phone: '+351 912 000 002',
-                    custodias: [{ id: 'cc1', label: 'Banca Standard', value: 611, rate: 15 }],
-                    children: []
-                },
-                'D': {
-                    id: 'D',
-                    name: 'Indicado Direto D',
-                    uid: 'UID-D001',
-                    refCode: 'REF-D001',
-                    email: 'd@bitradex.com',
-                    phone: '+351 912 000 003',
-                    custodias: [{ id: 'cd1', label: 'Banca Standard', value: 104, rate: 15 }],
-                    children: []
-                },
-                'E': {
-                    id: 'E',
-                    name: 'Indicado Direto E',
-                    uid: 'UID-E001',
-                    refCode: 'REF-E001',
-                    email: 'e@bitradex.com',
-                    phone: '+351 912 000 004',
-                    custodias: [{ id: 'ce1', label: 'Banca Standard', value: 100, rate: 15 }],
-                    children: []
-                },
-                'F': {
-                    id: 'F',
-                    name: 'Indicado Direto F',
-                    uid: 'UID-F001',
-                    refCode: 'REF-F001',
-                    email: 'f@bitradex.com',
-                    phone: '+351 912 000 005',
-                    custodias: [{ id: 'cf1', label: 'Banca Standard', value: 713, rate: 15 }],
-                    children: []
-                },
-                'B1': {
-                    id: 'B1',
-                    name: 'Indicado B1',
-                    uid: 'UID-B101',
-                    refCode: 'REF-B101',
-                    email: 'b1@bitradex.com',
-                    phone: '+351 912 100 001',
-                    custodias: [{ id: 'cb1_1', label: 'Banca Standard', value: 1366, rate: 15 }],
-                    children: ['B1_deep']
-                },
-                'B2': {
-                    id: 'B2',
-                    name: 'Indicado B2',
-                    uid: 'UID-B201',
-                    refCode: 'REF-B201',
-                    email: 'b2@bitradex.com',
-                    phone: '+351 912 100 002',
-                    custodias: [{ id: 'cb2_1', label: 'Banca Standard', value: 648, rate: 15 }],
-                    children: []
-                },
-                'B1_deep': {
-                    id: 'B1_deep',
-                    name: 'Profundidade B1 (N4)',
-                    uid: 'UID-B1D1',
-                    refCode: 'REF-B1D1',
-                    email: 'b1deep@bitradex.com',
-                    phone: '+351 912 100 003',
-                    custodias: [{ id: 'cb1d_1', label: 'Banca Standard', value: 108, rate: 15 }],
-                    children: []
-                }
-            };
-        };
-
         const TreeMemberCard = ({ memberId, network, stats, onEdit, onAddSub, onRemove, currentUserId }) => {
             const member = network[memberId];
             const memberStats = stats[memberId];
@@ -236,20 +86,21 @@
             if (!member || !memberStats) return null;
 
             const isRootOfSession = memberId === currentUserId;
+            // Identifica se o nó pertence a outro utilizador com login próprio (SaaS)
+            const isIndependentUser = member.userId && member.userId !== currentUserId && !isRootOfSession;
             const hasChildren = member.children && member.children.length > 0;
             const totalPersonal = getPersonalSum(member);
-            const isUplineMarker = memberId === 'patriarca' || memberId === 'b_independent_leg';
 
             return (
                 <div className="flex flex-col items-center">
                     <div className={`p-4 rounded-2xl border text-left min-w-[220px] max-w-[260px] shadow-2xl relative transition-all duration-300 hover:scale-105 z-20
-                        ${isUplineMarker 
-                            ? 'bg-gradient-to-b from-[#1b1c24] to-[#0d0e12] border-yellow-600/50 shadow-yellow-950/10 opacity-80' 
-                            : isRootOfSession 
-                                ? 'bg-gradient-to-b from-[#0a182d] to-[#040914] border-indigo-500/80 shadow-indigo-950/40' 
+                        ${isRootOfSession 
+                            ? 'bg-gradient-to-b from-[#0a182d] to-[#040914] border-indigo-500/80 shadow-indigo-950/40' 
+                            : isIndependentUser
+                                ? 'bg-gradient-to-b from-[#1b241c] to-[#0d140e] border-emerald-600/50 shadow-emerald-950/20'
                                 : 'bg-[#0e1222] border-slate-800 shadow-black/40'}`}>
                         
-                        {hasChildren && !isUplineMarker && (
+                        {hasChildren && (
                             <button 
                                 onClick={(e) => { e.stopPropagation(); setIsCollapsed(!isCollapsed); }}
                                 className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-[10px] text-gray-300 hover:bg-indigo-600 hover:border-indigo-500 transition-colors z-30 font-bold"
@@ -266,58 +117,31 @@
                                 {memberStats.vipLabel}
                             </span>
                             
-                            {!isUplineMarker && (
-                                <div className="flex gap-1">
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); onEdit(memberId); }} 
-                                        className="text-[10px] bg-slate-800/80 hover:bg-slate-700 p-1 rounded hover:text-white transition-colors"
-                                        title="Editar Dados"
-                                    >
-                                        ✏️
-                                    </button>
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); onAddSub(memberId); }} 
-                                        className="text-[10px] bg-indigo-950/40 hover:bg-indigo-900 p-1 rounded text-indigo-400 transition-colors"
-                                        title="Adicionar Sub-Indicado"
-                                    >
-                                        ➕
-                                    </button>
-                                    {!isRootOfSession && (
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); onRemove(memberId); }} 
-                                            className="text-[10px] bg-red-950/40 hover:bg-red-900 p-1 rounded text-red-400 transition-colors"
-                                            title="Remover"
-                                        >
-                                            🗑️
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-                            {isUplineMarker && (
-                                <span className="text-[8px] bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded font-black uppercase">
-                                    {memberId === 'patriarca' ? 'Patriarca' : 'Linha Paralela'}
-                                </span>
-                            )}
+                            <div className="flex gap-1">
+                                {/* Oculta edição se a conta não lhe pertencer (SaaS Externo) */}
+                                {!isIndependentUser && (
+                                    <>
+                                        <button onClick={() => onEdit(memberId)} className="text-[10px] bg-slate-800/80 hover:bg-slate-700 p-1 rounded hover:text-white transition-colors" title="Editar Dados">✏️</button>
+                                        <button onClick={() => onAddSub(memberId)} className="text-[10px] bg-indigo-950/40 hover:bg-indigo-900 p-1 rounded text-indigo-400 transition-colors" title="Adicionar Indicado">➕</button>
+                                        {!isRootOfSession && (
+                                            <button onClick={() => onRemove(memberId)} className="text-[10px] bg-red-950/40 hover:bg-red-900 p-1 rounded text-red-400 transition-colors" title="Remover">🗑️</button>
+                                        )}
+                                    </>
+                                )}
+                                {isIndependentUser && (
+                                    <span className="text-[8px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-black uppercase tracking-widest" title="Conta SaaS com Gestão Própria">Parceiro Ativo</span>
+                                )}
+                            </div>
                         </div>
 
                         <h4 className="text-xs font-bold text-gray-100 truncate mt-1">{member.name}</h4>
                         <p className="text-[9px] text-slate-500 font-mono mt-0.5">UID: {member.uid}</p>
-                        {!isUplineMarker && <p className="text-[8px] text-indigo-400 font-mono font-bold">REF: {member.refCode}</p>}
+                        <p className="text-[8px] text-indigo-400 font-mono font-bold">REF: {member.refCode}</p>
 
-                        {/* Estatísticas de Profundidade */}
                         <div className="mt-2.5 pt-2 border-t border-slate-800/60 space-y-1 text-[9px] text-slate-400 bg-slate-950/50 p-2 rounded-lg">
-                            <div className="flex justify-between">
-                                <span>1º Nível (Diretos):</span>
-                                <span className="font-bold text-gray-200">{memberStats.level1}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span>2º Nível (Indiretos):</span>
-                                <span className="font-bold text-blue-400">{memberStats.level2}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span>3º Nível+ (Profundidade):</span>
-                                <span className="font-bold text-indigo-300">{memberStats.level3Plus}</span>
-                            </div>
+                            <div className="flex justify-between"><span>1º Nível (Diretos):</span><span className="font-bold text-gray-200">{memberStats.level1}</span></div>
+                            <div className="flex justify-between"><span>2º Nível (Indiretos):</span><span className="font-bold text-blue-400">{memberStats.level2}</span></div>
+                            <div className="flex justify-between"><span>3º Nível+ (Profundidade):</span><span className="font-bold text-indigo-300">{memberStats.level3Plus}</span></div>
                         </div>
 
                         <div className="mt-3 pt-2.5 border-t border-slate-850 grid grid-cols-2 gap-2 text-[10px]">
@@ -332,9 +156,7 @@
                         </div>
                     </div>
 
-                    {hasChildren && !isCollapsed && (
-                        <div className="w-0.5 h-6 bg-slate-700 relative"></div>
-                    )}
+                    {hasChildren && !isCollapsed && <div className="w-0.5 h-6 bg-slate-700 relative"></div>}
 
                     {hasChildren && !isCollapsed && (
                         <div className="flex gap-8 relative pt-2">
@@ -345,23 +167,10 @@
                                 return (
                                     <div key={childId} className="relative flex flex-col items-center">
                                         {!isSingle && (
-                                            <div className="absolute top-0 h-0.5 bg-slate-700"
-                                                 style={{
-                                                     left: isFirst ? '50%' : '0',
-                                                     right: isLast ? '50%' : '0',
-                                                 }}
-                                            />
+                                            <div className="absolute top-0 h-0.5 bg-slate-700" style={{ left: isFirst ? '50%' : '0', right: isLast ? '50%' : '0' }} />
                                         )}
                                         <div className="w-0.5 h-4 bg-slate-700 z-10"></div>
-                                        <TreeMemberCard 
-                                            memberId={childId}
-                                            network={network}
-                                            stats={stats}
-                                            onEdit={onEdit}
-                                            onAddSub={onAddSub}
-                                            onRemove={onRemove}
-                                            currentUserId={currentUserId}
-                                        />
+                                        <TreeMemberCard memberId={childId} network={network} stats={stats} onEdit={onEdit} onAddSub={onAddSub} onRemove={onRemove} currentUserId={currentUserId} />
                                     </div>
                                 );
                             })}
@@ -382,10 +191,10 @@
             const [loading, setLoading] = useState(true);
             const [activeTab, setActiveTab] = useState('dashboard');
             const [viewMode, setViewMode] = useState('chart');
-            const [dbConfigured, setDbConfigured] = useState(false);
             const [botYield, setBotYield] = useState(1.0);
-            const [hasPatriarch, setHasPatriarch] = useState(true);
-            const [sessionPerspective, setSessionPerspective] = useState('root');
+            
+            // Variável de Ligação ao Patriarca
+            const [uplineSearch, setUplineSearch] = useState('');
 
             const [toast, setToast] = useState({ show: false, message: '' });
             const [showModal, setShowModal] = useState(false);
@@ -403,181 +212,148 @@
 
             const showNotification = (msg) => {
                 setToast({ show: true, message: msg });
-                setTimeout(() => setToast({ show: false, message: '' }), 3000);
+                setTimeout(() => setToast({ show: false, message: '' }), 4000);
             };
 
-            // ESCUTA ESTADO DE AUTENTICAÇÃO DO SUPABASE (Corrigido para evitar loading infinito se deslogado)
             useEffect(() => {
                 const client = getSupabase();
-                if (!client) {
-                    setLoading(false);
-                    return;
-                }
+                if (!client) { setLoading(false); return; }
 
                 client.auth.getSession().then(({ data: { session } }) => {
                     setSession(session);
-                    if (!session) {
-                        setLoading(false);
-                    }
-                }).catch(() => {
-                    setLoading(false);
+                    if (!session) setLoading(false);
                 });
 
                 const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
                     setSession(session);
-                    if (!session) {
-                        setLoading(false);
-                    }
+                    if (!session) setLoading(false);
                 });
 
-                return () => {
-                    if (subscription && typeof subscription.unsubscribe === 'function') {
-                        subscription.unsubscribe();
-                    }
-                };
+                return () => subscription?.unsubscribe();
             }, []);
 
             const fetchNetwork = async () => {
-                if (!session) {
-                    setLoading(false);
-                    return;
-                }
-
+                if (!session) return;
                 setLoading(true);
                 const client = getSupabase();
-                
-                if (!client) {
-                    const local = localStorage.getItem('crm_vip_network_v2');
-                    if (local) {
-                        try {
-                            setNetwork(migrateNetworkData(JSON.parse(local)));
-                        } catch (e) {
-                            setNetwork(getFactoryCleanState());
-                        }
-                    } else {
-                        const fresh = getFactoryCleanState();
-                        setNetwork(fresh);
-                        localStorage.setItem('crm_vip_network_v2', JSON.stringify(fresh));
-                    }
-                    setDbConfigured(false);
-                    setLoading(false);
-                    return;
-                }
+                if (!client) return;
 
                 try {
-                    const { data, error } = await client
-                        .from('simulador_rede')
-                        .select('*')
-                        .eq('user_id', session.user.id);
-                    
+                    // Busca TODA a rede pública. O isolamento de visualização é feito pela travessia da árvore!
+                    const { data, error } = await client.from('simulador_rede').select('*');
                     if (error) throw error;
 
-                    if (data && data.length > 0) {
-                        const networkObj = {};
+                    const networkObj = {};
+                    if (data) {
                         data.forEach(item => {
                             let custodias = item.custodias;
                             if (!custodias || !Array.isArray(custodias)) {
-                                custodias = [
-                                    { id: 'c_mig_' + item.id, label: 'Custódia Bitradex', value: parseFloat(item.personal) || 0, rate: 15 }
-                                ];
+                                custodias = [{ id: 'c_' + item.id, label: 'Custódia Base', value: parseFloat(item.personal) || 0, rate: 15 }];
                             }
                             networkObj[item.id] = {
                                 id: item.id,
+                                userId: item.user_id, // Para bloquear edição de contas alheias
                                 name: item.name,
                                 uid: item.uid,
                                 refCode: item.ref_code,
                                 email: item.email,
                                 phone: item.phone,
+                                patriarca_id: item.patriarca_id,
                                 custodias: custodias,
                                 children: item.children || []
                             };
                         });
-
-                        if (!networkObj['root']) {
-                            networkObj['root'] = getFactoryCleanState()['root'];
-                        }
-                        setNetwork(networkObj);
-                    } else {
-                        const seed = getFactoryCleanState();
-                        setNetwork(seed);
-                        const uploads = Object.values(seed).map(node => ({
-                            id: node.id,
-                            name: node.name,
-                            uid: node.uid,
-                            ref_code: node.refCode,
-                            email: node.email,
-                            phone: node.phone,
-                            personal: getPersonalSum(node),
-                            custodias: node.custodias,
-                            children: node.children,
-                            user_id: session.user.id
-                        }));
-                        await client.from('simulador_rede').upsert(uploads);
                     }
-                    setDbConfigured(true);
+
+                    // Se a conta do utilizador atual não existir, cria a base (O Seu Nó)
+                    const myId = session.user.id;
+                    if (!networkObj[myId]) {
+                        const baseNode = {
+                            id: myId,
+                            name: 'O Meu Perfil SaaS',
+                            uid: `UID-${myId.substring(0,6).toUpperCase()}`,
+                            refCode: `REF-${myId.substring(0,4).toUpperCase()}`,
+                            email: session.user.email,
+                            phone: '',
+                            patriarca_id: null,
+                            custodias: [{ id: 'c_main', label: 'Banca Principal', value: 0, rate: 15 }],
+                            children: [],
+                            user_id: myId
+                        };
+                        networkObj[myId] = { ...baseNode, userId: myId };
+                        await client.from('simulador_rede').upsert([baseNode]);
+                    }
+
+                    setNetwork(networkObj);
                 } catch (err) {
-                    console.warn("Sem acesso ao banco online, fallback local:", err.message);
-                    setNetwork(getFactoryCleanState());
-                    setDbConfigured(false);
+                    console.error("Erro ao buscar a rede global:", err.message);
                 } finally {
                     setLoading(false);
                 }
             };
 
-            useEffect(() => {
-                if (session) {
-                    fetchNetwork();
-                }
-            }, [session]);
+            useEffect(() => { if (session) fetchNetwork(); }, [session]);
 
             const handleSignUp = async (e) => {
                 e.preventDefault();
                 setAuthError('');
-                const client = getSupabase();
-                if (!client) return showNotification("Erro: Supabase não inicializado.");
-
                 setLoading(true);
-                const { data, error } = await client.auth.signUp({ email, password });
+                const { error } = await getSupabase().auth.signUp({ email, password });
                 setLoading(false);
-                
-                if (error) {
-                    setAuthError(error.message);
-                } else {
-                    showNotification("Registo efetuado com sucesso!");
-                }
+                if (error) setAuthError(error.message);
+                else showNotification("Registo efetuado! Pode entrar.");
             };
 
             const handleSignIn = async (e) => {
                 e.preventDefault();
                 setAuthError('');
-                const client = getSupabase();
-                if (!client) return;
-
                 setLoading(true);
-                const { data, error } = await client.auth.signInWithPassword({ email, password });
+                const { error } = await getSupabase().auth.signInWithPassword({ email, password });
                 setLoading(false);
-
-                if (error) {
-                    setAuthError(error.message);
-                } else {
-                    showNotification("Sessão iniciada!");
-                }
+                if (error) setAuthError(error.message);
             };
 
-            const handleSignOut = async () => {
+            // RASTREIO E AUTO-CONEXÃO AO PATRIARCA
+            const conectarAoPatriarca = async () => {
+                if (!uplineSearch.trim()) return showNotification("Introduza o UID, Ref Code ou E-mail do seu Patriarca.");
+                setLoading(true);
                 const client = getSupabase();
-                if (client) {
-                    await client.auth.signOut();
-                    setSession(null);
-                    setNetwork({});
-                    showNotification("Sessão terminada.");
+                
+                // Dispara a Função de Banco de Dados (RPC) configurada no Supabase
+                const { data, error } = await client.rpc('conectar_rede_patriarca', {
+                    novo_membro_id: session.user.id,
+                    termo_busca_patriarca: uplineSearch.trim()
+                });
+
+                setLoading(false);
+                if (error) {
+                    showNotification("Erro ao conectar: " + error.message);
+                } else if (data && data.sucesso) {
+                    showNotification("🚀 " + data.mensagem);
+                    fetchNetwork(); // Recarrega para aplicar a interligação
+                } else {
+                    showNotification("⚠️ " + (data?.mensagem || "Líder não encontrado."));
                 }
             };
+
+            // CÁLCULO RECURSIVO EXCLUSIVO PARA A SUA DOWNLINE
+            // Ele não sobe para o Patriarca, logo você não vê as "Crosslines"
+            const visibleMembers = useMemo(() => {
+                if (!session) return new Set();
+                const visible = new Set();
+                const traverseDown = (id) => {
+                    if (!id || !network[id]) return;
+                    visible.add(id);
+                    network[id].children.forEach(cid => traverseDown(cid));
+                };
+                traverseDown(session.user.id);
+                return visible;
+            }, [network, session]);
 
             const stats = useMemo(() => {
-                if (Object.keys(network).length === 0) return {};
-
+                if (!session || Object.keys(network).length === 0) return {};
                 const results = {};
+
                 const calculateNode = (id) => {
                     const node = network[id];
                     if (!node) return { teamVol: 0, directsActive: 0, level: 'Membro', vipLabel: 'V0 (Básico)', level1: 0, level2: 0, level3Plus: 0, hasVipInTree: 'Membro' };
@@ -605,14 +381,7 @@
                         const hasPersonal = userPersonalSum >= rule.reqPersonal;
                         const hasTeamVol = teamVol >= rule.reqTeamVol;
                         const hasDirects = directsActive >= rule.reqDirects;
-                        
-                        let hasVipLines = true;
-                        if (rule.prevVip) {
-                            const linesWithPrevVip = childVips.filter(cv => 
-                                cv.level === rule.prevVip || results[cv.id]?.hasVipInTree === rule.prevVip
-                            ).length;
-                            hasVipLines = linesWithPrevVip >= 2;
-                        }
+                        let hasVipLines = rule.prevVip ? (childVips.filter(cv => cv.level === rule.prevVip || results[cv.id]?.hasVipInTree === rule.prevVip).length >= 2) : true;
 
                         if (hasPersonal && hasTeamVol && hasDirects && hasVipLines) {
                             currentLevel = rule.level;
@@ -620,10 +389,7 @@
                         }
                     }
 
-                    let level1 = 0;
-                    let level2 = 0;
-                    let level3Plus = 0;
-
+                    let level1 = 0, level2 = 0, level3Plus = 0;
                     const traverseDepths = (nodeId, depth) => {
                         const targetNode = network[nodeId];
                         if (!targetNode) return;
@@ -636,438 +402,186 @@
                     };
                     traverseDepths(id, 1);
 
-                    const vipLabel = currentLevel === 'Membro' ? 'V0 (Básico)' : `V${currentLevel.replace('VIP', '')}`;
-
                     results[id] = {
-                        teamVol,
-                        directsActive,
-                        level: currentLevel,
-                        vipLabel,
-                        level1,
-                        level2,
-                        level3Plus,
-                        hasVipInTree: currentLevel === 'Membro' ? 
-                            (childVips.some(cv => results[cv.id]?.hasVipInTree !== 'Membro') ? 'VIP1' : 'Membro') : currentLevel
+                        teamVol, directsActive, level: currentLevel,
+                        vipLabel: currentLevel === 'Membro' ? 'V0 (Básico)' : `V${currentLevel.replace('VIP', '')}`,
+                        level1, level2, level3Plus,
+                        hasVipInTree: currentLevel === 'Membro' ? (childVips.some(cv => results[cv.id]?.hasVipInTree !== 'Membro') ? 'VIP1' : 'Membro') : currentLevel
                     };
-
                     return results[id];
                 };
 
-                const startNode = hasPatriarch ? 'patriarca' : 'root';
-                if (network[startNode]) calculateNode(startNode);
-                if (!hasPatriarch && network['root']) calculateNode('root');
-
+                // Apenas processa as estatísticas da sua rede para baixo para otimizar performance
+                if (network[session.user.id]) calculateNode(session.user.id);
                 return results;
-            }, [network, hasPatriarch]);
-
-            const visibleMembers = useMemo(() => {
-                const visible = new Set();
-                const traverse = (id) => {
-                    if (!id || !network[id]) return;
-                    visible.add(id);
-                    if (network[id].children) {
-                        network[id].children.forEach(cid => traverse(cid));
-                    }
-                };
-                traverse(sessionPerspective);
-                return visible;
-            }, [network, sessionPerspective]);
+            }, [network, session]);
 
             const earnings = useMemo(() => {
                 let direct = 0, indirect = 0, diff = 0, matchingSameLevel = 0;
-                
-                const currentRootId = sessionPerspective;
-                if (!stats[currentRootId]) return { personalDaily: 0, personalMonthly: 0, direct: 0, indirect: 0, diff: 0, matchingSameLevel: 0, teamDaily: 0, totalDaily: 0, totalMonthly: 0 };
+                if (!session || !stats[session.user.id]) return { personalDaily: 0, personalMonthly: 0, direct: 0, indirect: 0, diff: 0, matchingSameLevel: 0, teamDaily: 0, totalDaily: 0, totalMonthly: 0 };
 
-                const myRate = VIP_RULES.find(r => r.level === stats[currentRootId]?.level)?.rate || 0;
-                const personalMonthlyProfit = getMonthlyYield(network[currentRootId]);
+                const rootId = session.user.id;
+                const myRate = VIP_RULES.find(r => r.level === stats[rootId]?.level)?.rate || 0;
+                const personalMonthlyProfit = getMonthlyYield(network[rootId]);
                 const personalDailyProfit = personalMonthlyProfit / 30;
 
                 const traverse = (id, depth = 0) => {
                     const userNode = network[id];
                     if (!userNode) return;
                     
-                    if (id !== currentRootId) {
+                    if (id !== rootId) {
                         const userMonthlyYield = getMonthlyYield(userNode);
                         const userDailyYield = userMonthlyYield / 30;
 
-                        if (depth === 1) {
-                            direct += userDailyYield * 0.10;
-                        } else if (depth === 2) {
-                            indirect += userDailyYield * 0.05;
-                        }
+                        if (depth === 1) direct += userDailyYield * 0.10;
+                        else if (depth === 2) indirect += userDailyYield * 0.05;
 
                         const dailyBotYield = getPersonalSum(userNode) * (botYield / 100);
                         const userRate = VIP_RULES.find(r => r.level === stats[id]?.level)?.rate || 0;
                         
-                        if (myRate > userRate) {
-                            diff += dailyBotYield * (myRate - userRate);
-                        } else if (myRate === userRate && myRate > 0) {
-                            const memberDailyBotYield = (stats[id]?.teamVol || 0) * (botYield / 100);
-                            matchingSameLevel += memberDailyBotYield * 0.10 * 0.20;
-                        }
+                        if (myRate > userRate) diff += dailyBotYield * (myRate - userRate);
+                        else if (myRate === userRate && myRate > 0) matchingSameLevel += (stats[id]?.teamVol || 0) * (botYield / 100) * 0.10 * 0.20;
                     }
-
                     userNode.children.forEach(cid => traverse(cid, depth + 1));
                 };
 
-                traverse(currentRootId);
+                traverse(rootId);
                 const teamDaily = direct + indirect + diff + matchingSameLevel;
-
                 return {
-                    personalDaily: personalDailyProfit,
-                    personalMonthly: personalMonthlyProfit,
-                    direct,
-                    indirect,
-                    diff,
-                    matchingSameLevel,
-                    teamDaily,
-                    totalDaily: personalDailyProfit + teamDaily,
-                    totalMonthly: (personalDailyProfit * 30) + (teamDaily * 30)
+                    personalDaily: personalDailyProfit, personalMonthly: personalMonthlyProfit,
+                    direct, indirect, diff, matchingSameLevel, teamDaily,
+                    totalDaily: personalDailyProfit + teamDaily, totalMonthly: (personalDailyProfit * 30) + (teamDaily * 30)
                 };
-            }, [network, stats, botYield, sessionPerspective]);
+            }, [network, stats, botYield, session]);
 
             const roadmap = useMemo(() => {
-                const currentLevel = stats[sessionPerspective]?.level || 'Membro';
+                if (!session || !stats[session.user.id]) return null;
+                const currentLevel = stats[session.user.id]?.level || 'Membro';
                 if (currentLevel === 'VIP6') return null;
                 const currentIndex = VIP_RULES.findIndex(r => r.level === currentLevel);
                 const nextRule = VIP_RULES[currentIndex - 1];
-                const activePersonalSum = getPersonalSum(network[sessionPerspective]);
+                const activePersonalSum = getPersonalSum(network[session.user.id]);
                 return {
                     nextLevel: nextRule.level,
                     personal: { req: nextRule.reqPersonal, current: activePersonalSum, done: activePersonalSum >= nextRule.reqPersonal },
-                    teamVol: { req: nextRule.reqTeamVol, current: stats[sessionPerspective]?.teamVol || 0, done: (stats[sessionPerspective]?.teamVol || 0) >= nextRule.reqTeamVol },
-                    directs: { req: nextRule.reqDirects, current: stats[sessionPerspective]?.directsActive || 0, done: (stats[sessionPerspective]?.directsActive || 0) >= nextRule.reqDirects }
+                    teamVol: { req: nextRule.reqTeamVol, current: stats[session.user.id]?.teamVol || 0, done: (stats[session.user.id]?.teamVol || 0) >= nextRule.reqTeamVol },
+                    directs: { req: nextRule.reqDirects, current: stats[session.user.id]?.directsActive || 0, done: (stats[session.user.id]?.directsActive || 0) >= nextRule.reqDirects }
                 };
-            }, [network, stats, sessionPerspective]);
-
-            const saveLocalOrCloud = async (updatedNetwork, newId = null, targetParentId = null) => {
-                setNetwork(updatedNetwork);
-                localStorage.setItem('crm_vip_network_v2', JSON.stringify(updatedNetwork));
-
-                const client = getSupabase();
-                if (client && dbConfigured && session) {
-                    try {
-                        const listToUpsert = [];
-                        if (newId) {
-                            listToUpsert.push({
-                                id: newId,
-                                name: updatedNetwork[newId].name,
-                                uid: updatedNetwork[newId].uid,
-                                ref_code: updatedNetwork[newId].refCode,
-                                email: updatedNetwork[newId].email,
-                                phone: updatedNetwork[newId].phone,
-                                personal: getPersonalSum(updatedNetwork[newId]),
-                                custodias: updatedNetwork[newId].custodias,
-                                children: [],
-                                user_id: session.user.id 
-                            });
-                        }
-                        if (targetParentId) {
-                            listToUpsert.push({
-                                id: targetParentId,
-                                name: updatedNetwork[targetParentId].name,
-                                uid: updatedNetwork[targetParentId].uid,
-                                ref_code: updatedNetwork[targetParentId].refCode,
-                                email: updatedNetwork[targetParentId].email,
-                                phone: updatedNetwork[targetParentId].phone,
-                                personal: getPersonalSum(updatedNetwork[targetParentId]),
-                                custodias: updatedNetwork[targetParentId].custodias,
-                                children: updatedNetwork[targetParentId].children,
-                                user_id: session.user.id 
-                            });
-                        }
-                        if (!newId && !targetParentId && selectedMemberId) {
-                            listToUpsert.push({
-                                id: selectedMemberId,
-                                name: updatedNetwork[selectedMemberId].name,
-                                uid: updatedNetwork[selectedMemberId].uid,
-                                ref_code: updatedNetwork[selectedMemberId].refCode,
-                                email: updatedNetwork[selectedMemberId].email,
-                                phone: updatedNetwork[selectedMemberId].phone,
-                                personal: getPersonalSum(updatedNetwork[selectedMemberId]),
-                                custodias: updatedNetwork[selectedMemberId].custodias,
-                                children: updatedNetwork[selectedMemberId].children,
-                                user_id: session.user.id 
-                            });
-                        }
-
-                        if (listToUpsert.length > 0) {
-                            await client.from('simulador_rede').upsert(listToUpsert);
-                        }
-                    } catch (e) {
-                        console.error("Erro ao gravar dados no Supabase:", e);
-                        showNotification("Gravado apenas localmente. Erro na nuvem.");
-                    }
-                }
-            };
+            }, [network, stats, session]);
 
             const handleSaveMember = async () => {
                 if (!form.name) return showNotification("O nome é obrigatório.");
+                const client = getSupabase();
                 let updatedNetwork = { ...network };
 
                 if (modalMode === 'add') {
-                    const newId = `user_${Date.now()}`;
-                    updatedNetwork[newId] = {
-                        id: newId,
-                        name: form.name,
-                        uid: form.uid || `UID-${Date.now().toString().slice(-6)}`,
-                        refCode: form.refCode || `REF-${Date.now().toString().slice(-4)}`,
-                        email: form.email,
-                        phone: form.phone,
-                        custodias: formCustodias,
-                        children: []
+                    const newId = `node_${Date.now()}`;
+                    const newNode = {
+                        id: newId, name: form.name, uid: form.uid || `UID-${Date.now().toString().slice(-4)}`,
+                        ref_code: form.refCode, email: form.email, phone: form.phone,
+                        custodias: formCustodias, children: [], user_id: session.user.id, patriarca_id: selectedMemberId
                     };
+                    
                     updatedNetwork[selectedMemberId].children.push(newId);
-                    await saveLocalOrCloud(updatedNetwork, newId, selectedMemberId);
-                    showNotification(`Membro "${form.name}" registado com sucesso!`);
+                    updatedNetwork[newId] = { ...newNode, userId: session.user.id, refCode: form.refCode };
+                    setNetwork(updatedNetwork);
+
+                    try {
+                        await client.from('simulador_rede').upsert([newNode]);
+                        await client.from('simulador_rede').update({ children: updatedNetwork[selectedMemberId].children }).eq('id', selectedMemberId);
+                        showNotification("Membro registado e conectado com sucesso!");
+                    } catch (e) { showNotification("Gravado localmente. Falha ao enviar para a nuvem."); }
                 } else {
-                    updatedNetwork[selectedMemberId] = {
-                        ...updatedNetwork[selectedMemberId],
-                        name: form.name,
-                        uid: form.uid,
-                        refCode: form.refCode,
-                        email: form.email,
-                        phone: form.phone,
-                        custodias: formCustodias
-                    };
-                    await saveLocalOrCloud(updatedNetwork);
-                    showNotification(`Dados de "${form.name}" atualizados!`);
+                    updatedNetwork[selectedMemberId] = { ...updatedNetwork[selectedMemberId], name: form.name, uid: form.uid, refCode: form.refCode, email: form.email, phone: form.phone, custodias: formCustodias };
+                    setNetwork(updatedNetwork);
+                    try {
+                        await client.from('simulador_rede').update({ name: form.name, uid: form.uid, ref_code: form.refCode, email: form.email, phone: form.phone, custodias: formCustodias }).eq('id', selectedMemberId);
+                        showNotification("Dados atualizados na rede!");
+                    } catch (e) { showNotification("Atualizado localmente. Falha ao enviar para a nuvem."); }
                 }
                 setShowModal(false);
             };
 
             const handleRemoveMember = (id) => {
-                if (id === 'root' || id === 'patriarca') return;
+                if (id === session.user.id) return showNotification("Ação bloqueada. Não pode remover o seu próprio nó primário daqui.");
+                if (network[id].userId !== session.user.id) return showNotification("Sem permissão. Este nó pertence a uma conta SaaS independente.");
+
                 setConfirmModal({
-                    show: true,
-                    title: "Excluir Membro da Rede",
-                    message: `Pretende eliminar "${network[id]?.name}"? Esta ação removerá também todos os sub-membros desta ramificação de forma definitiva na nuvem.`,
+                    show: true, title: "Excluir Nó e Downlines",
+                    message: `Eliminar "${network[id]?.name}"? Esta ação removerá definitivamente toda a ramificação.`,
                     action: async () => {
                         let updatedNetwork = { ...network };
                         let parentId = Object.keys(updatedNetwork).find(k => updatedNetwork[k].children.includes(id));
 
-                        if (parentId) {
-                            updatedNetwork[parentId].children = updatedNetwork[parentId].children.filter(cid => cid !== id);
-                        }
+                        if (parentId) updatedNetwork[parentId].children = updatedNetwork[parentId].children.filter(cid => cid !== id);
 
                         const deletedIds = [];
                         const cleanNodes = (nodeId) => {
-                            const node = updatedNetwork[nodeId];
-                            if (node) {
-                                node.children.forEach(cleanNodes);
+                            if (updatedNetwork[nodeId]) {
+                                updatedNetwork[nodeId].children.forEach(cleanNodes);
                                 deletedIds.push(nodeId);
                                 delete updatedNetwork[nodeId];
                             }
                         };
                         cleanNodes(id);
-
                         setNetwork(updatedNetwork);
-                        localStorage.setItem('crm_vip_network_v2', JSON.stringify(updatedNetwork));
 
                         const client = getSupabase();
-                        if (client && dbConfigured && session) {
-                            try {
-                                if (parentId) {
-                                    await client.from('simulador_rede').update({ children: updatedNetwork[parentId].children }).eq('id', parentId);
-                                }
-                                await client.from('simulador_rede').delete().in('id', deletedIds).eq('user_id', session.user.id);
-                                showNotification("Sincronizado e removido na base de dados online.");
-                            } catch (e) {
-                                showNotification("Removido localmente. Erro ao sincronizar remoção na nuvem.");
-                            }
-                        } else {
-                            showNotification("Membro removido localmente.");
-                        }
+                        try {
+                            if (parentId) await client.from('simulador_rede').update({ children: updatedNetwork[parentId].children }).eq('id', parentId);
+                            await client.from('simulador_rede').delete().in('id', deletedIds).eq('user_id', session.user.id);
+                            showNotification("Nó e ramificação removidos globalmente.");
+                        } catch (e) { showNotification("Erro ao excluir do banco de dados."); }
                     }
                 });
-            };
-
-            const triggerReset = () => {
-                setConfirmModal({
-                    show: true,
-                    title: "Reiniciar Todo o Sistema",
-                    message: "Atenção! Esta ação apagará todos os dados customizados da nuvem e do armazenamento local, redefinindo o ecossistema com os investidores modelo.",
-                    action: async () => {
-                        const clean = getFactoryCleanState();
-                        setNetwork(clean);
-                        localStorage.setItem('crm_vip_network_v2', JSON.stringify(clean));
-                        setSessionPerspective('root');
-                        setHasPatriarch(true);
-
-                        const client = getSupabase();
-                        if (client && dbConfigured && session) {
-                            try {
-                                await client.from('simulador_rede').delete().eq('user_id', session.user.id);
-                                const uploads = Object.values(clean).map(node => ({
-                                    id: node.id,
-                                    name: node.name,
-                                    uid: node.uid,
-                                    ref_code: node.refCode,
-                                    email: node.email,
-                                    phone: node.phone,
-                                    personal: getPersonalSum(node),
-                                    custodias: node.custodias,
-                                    children: node.children,
-                                    user_id: session.user.id
-                                }));
-                                await client.from('simulador_rede').upsert(uploads);
-                                showNotification("Sincronização redefinida para os dados padrão!");
-                            } catch (e) {
-                                showNotification("Erro ao atualizar o banco online. Redefinido apenas local.");
-                            }
-                        } else {
-                            showNotification("Redefinido offline com sucesso.");
-                        }
-                    }
-                });
-            };
-
-            const togglePatriarch = () => {
-                setHasPatriarch(prev => {
-                    const newVal = !prev;
-                    if (!newVal) setSessionPerspective('root');
-                    showNotification(newVal ? "Patriarca ativado. Visibilidade ampliada." : "Simulando visão estrita de 'Você'.");
-                    return newVal;
-                });
-            };
-
-            const exportToExcel = () => {
-                if (typeof XLSX === 'undefined') {
-                    showNotification("Ferramenta de exportação ainda a carregar.");
-                    return;
-                }
-                const rows = [];
-                const startNode = sessionPerspective;
-
-                const traverse = (id, depth = 0) => {
-                    const u = network[id];
-                    const uStat = stats[id];
-                    if (!u || !uStat || !visibleMembers.has(id)) return;
-
-                    rows.push({
-                        "Hierarquia": id === 'patriarca' ? "Patriarca" : (id === 'root' ? "Você (Líder)" : `Nível ${depth}`),
-                        "Nome": u.name,
-                        "UID": u.uid,
-                        "Código Ref": u.refCode,
-                        "E-mail": u.email || 'N/D',
-                        "Telefone": u.phone || 'N/D',
-                        "Aporte Total ($)": getPersonalSum(u),
-                        "Qtd Custódias": u.custodias?.length || 0,
-                        "Rendimento Mensal ($)": getMonthlyYield(u),
-                        "Volume de Equipe ($)": uStat.teamVol,
-                        "1º Nível (Diretos)": uStat.level1,
-                        "2º Nível (Indiretos)": uStat.level2,
-                        "3º Nível+ (Profundidade)": uStat.level3Plus,
-                        "Classificação VIP": uStat.vipLabel
-                    });
-                    u.children.forEach(cid => traverse(cid, depth + 1));
-                };
-
-                traverse(startNode);
-                const worksheet = XLSX.utils.json_to_sheet(rows);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "Minha_Rede_Bitradex");
-                XLSX.writeFile(workbook, `Bitradex_Relatorio_Rede_${Date.now()}.xlsx`);
             };
 
             const openAddModal = (parentId) => {
-                setModalMode('add');
-                setSelectedMemberId(parentId);
+                setModalMode('add'); setSelectedMemberId(parentId);
                 setForm({ name: '', refCode: '', uid: '', email: '', phone: '' });
-                setFormCustodias([{ id: 'c_' + Date.now(), label: 'Custódia Bitradex', value: 100, rate: 15 }]);
+                setFormCustodias([{ id: 'c_' + Date.now(), label: 'Nova Custódia', value: 100, rate: 15 }]);
                 setShowModal(true);
             };
 
             const openEditModal = (id) => {
-                setModalMode('edit');
-                setSelectedMemberId(id);
+                if (network[id].userId !== session.user.id) return showNotification("Não pode editar as finanças de um utilizador SaaS independente.");
+                setModalMode('edit'); setSelectedMemberId(id);
                 const m = network[id];
-                setForm({
-                    name: m.name,
-                    refCode: m.refCode || '',
-                    uid: m.uid || '',
-                    email: m.email || '',
-                    phone: m.phone || ''
-                });
-                setFormCustodias(m.custodias ? [...m.custodias] : [{ id: 'c_' + Date.now(), label: 'Banca Standard', value: 0, rate: 15 }]);
+                setForm({ name: m.name, refCode: m.refCode || '', uid: m.uid || '', email: m.email || '', phone: m.phone || '' });
+                setFormCustodias(m.custodias ? [...m.custodias] : [{ id: 'c_' + Date.now(), label: 'Custódia Ativa', value: 0, rate: 15 }]);
                 setShowModal(true);
             };
 
-            const handleMouseDown = (e) => {
-                if (e.target.closest('button') || e.target.closest('input')) return;
-                setIsDragging(true);
-                setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+            const handleMouseEvents = {
+                onMouseDown: (e) => { if (!e.target.closest('button')) { setIsDragging(true); setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y }); } },
+                onMouseMove: (e) => { if (isDragging) setPanOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }); },
+                onMouseUp: () => setIsDragging(false),
+                onMouseLeave: () => setIsDragging(false)
             };
-
-            const handleMouseMove = (e) => {
-                if (!isDragging) return;
-                setPanOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-            };
-
-            const handleMouseUp = () => {
-                setIsDragging(false);
-            };
-
-            const handleTouchStart = (e) => {
-                if (e.target.closest('button') || e.target.closest('input')) return;
-                const touch = e.touches[0];
-                setIsDragging(true);
-                setDragStart({ x: touch.clientX - panOffset.x, y: touch.clientY - panOffset.y });
-            };
-
-            const handleTouchMove = (e) => {
-                if (!isDragging) return;
-                const touch = e.touches[0];
-                setPanOffset({ x: touch.clientX - dragStart.x, y: touch.clientY - dragStart.y });
-            };
-
-            if (loading && !session) {
-                return (
-                    <div className="flex-1 flex flex-col items-center justify-center bg-[#05070e] text-gray-400 space-y-4">
-                        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-sm font-semibold tracking-wide">A conectar ao servidor...</p>
-                    </div>
-                );
-            }
 
             if (!session) {
                 return (
                     <div className="min-h-screen bg-[#05070e] flex items-center justify-center p-4">
-                        <div className="bg-[#0b0e1a] border border-[#1c273e] p-8 rounded-3xl max-w-md w-full space-y-6 shadow-2xl relative overflow-hidden">
+                        <div className="bg-[#0b0e1a] border border-[#1c273e] p-8 rounded-3xl max-w-md w-full space-y-6 shadow-2xl relative">
                             <div className="text-center">
                                 <span className="p-3.5 bg-gradient-to-r from-emerald-500 to-indigo-600 rounded-2xl text-white font-extrabold text-2xl inline-block mb-3 shadow-lg shadow-indigo-950/50">BX</span>
-                                <h2 className="text-2xl font-black text-white">Painel Bitradex SaaS</h2>
-                                <p className="text-xs text-gray-400 mt-1">
-                                    {authMode === 'login' ? 'Inicie sessão para gerir a sua rede' : 'Registe o seu perfil de líder de equipe'}
-                                </p>
+                                <h2 className="text-2xl font-black text-white">Rede Global Bitradex</h2>
+                                <p className="text-xs text-gray-400 mt-1">{authMode === 'login' ? 'Entre e controle o seu crescimento' : 'Registe-se e integre o ecossistema'}</p>
                             </div>
-
-                            {authError && (
-                                <div className="bg-red-950/40 border border-red-900 text-red-400 p-3 rounded-xl text-xs text-center font-bold">
-                                    ⚠️ {authError}
-                                </div>
-                            )}
-
+                            {authError && <div className="bg-red-950/40 border border-red-900 text-red-400 p-3 rounded-xl text-xs text-center font-bold">⚠️ {authError}</div>}
                             <form onSubmit={authMode === 'login' ? handleSignIn : handleSignUp} className="space-y-4">
                                 <div>
-                                    <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Endereço de E-mail</label>
-                                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" placeholder="lider@exemplo.com" />
+                                    <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">E-mail</label>
+                                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" />
                                 </div>
                                 <div>
                                     <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Palavra-passe</label>
-                                    <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" placeholder="••••••••" />
+                                    <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" />
                                 </div>
-
-                                <button type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg text-sm shadow-indigo-950/40">
-                                    {authMode === 'login' ? 'Entrar no Painel' : 'Criar Conta Gratuita'}
-                                </button>
+                                <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg text-sm">{authMode === 'login' ? 'Iniciar Sessão' : 'Criar Conta'}</button>
                             </form>
-
                             <div className="text-center text-xs">
-                                <button type="button" onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="text-indigo-400 hover:underline">
-                                    {authMode === 'login' ? 'Não tem uma conta SaaS? Registe-se' : 'Já possui conta de líder? Faça login'}
-                                </button>
+                                <button type="button" onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="text-indigo-400 hover:underline">{authMode === 'login' ? 'Nova conta? Registe-se' : 'Já tem conta? Faça login'}</button>
                             </div>
                         </div>
                     </div>
@@ -1078,84 +592,36 @@
                 return (
                     <div className="flex-1 flex flex-col items-center justify-center bg-[#05070e] text-gray-400 space-y-4">
                         <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-sm font-semibold tracking-wide">A carregar a sua equipa online...</p>
+                        <p className="text-sm font-semibold tracking-wide">A carregar Rede Global...</p>
                     </div>
                 );
             }
 
+            const me = network[session.user.id];
+
             return (
                 <div className="flex-1 flex flex-col min-h-screen bg-[#05070e]">
-                    {/* Header */}
                     <header className="bg-[#0b0e1a] border-b border-[#1b253b] px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-40">
                         <div className="flex items-center gap-3">
                             <span className="p-2.5 bg-gradient-to-r from-emerald-500 to-indigo-600 rounded-xl text-white font-extrabold text-lg tracking-wider shadow-lg shadow-indigo-950/40">BX</span>
                             <div>
-                                <h1 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
-                                    Painel Bitradex <span className="text-xs bg-indigo-500/20 text-indigo-400 font-extrabold px-2 py-0.5 rounded-full">Base de Dados Real</span>
-                                </h1>
-                                <p className="text-xs text-gray-400 font-medium truncate max-w-[280px] sm:max-w-none">Sessão: {session.user.email}</p>
+                                <h1 className="text-lg font-black tracking-tight text-white flex items-center gap-2">Painel Bitradex <span className="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">Global</span></h1>
+                                <p className="text-xs text-gray-400 font-medium">Conta de Rede Isolada: {session.user.email}</p>
                             </div>
                         </div>
-
-                        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-                            <div className="bg-[#12192c] p-1.5 rounded-xl border border-slate-800 flex items-center gap-2 w-full sm:w-auto">
-                                <span className="text-[10px] text-gray-400 font-bold px-2 uppercase tracking-wider">Sessão Ativa:</span>
-                                <div className="flex gap-1 w-full sm:w-auto">
-                                    <button
-                                        onClick={() => {
-                                            setSessionPerspective('root');
-                                            showNotification("Sessão alterada para: Sua Conta (Você)");
-                                        }}
-                                        className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all w-full sm:w-auto ${sessionPerspective === 'root' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
-                                    >
-                                        Você (Líder)
-                                    </button>
-                                    {hasPatriarch && network['patriarca'] && (
-                                        <button
-                                            onClick={() => {
-                                                setSessionPerspective('patriarca');
-                                                showNotification("Sessão alterada para: Patriarca (Upline)");
-                                            }}
-                                            className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all w-full sm:w-auto ${sessionPerspective === 'patriarca' ? 'bg-yellow-600 text-black shadow-md' : 'text-gray-400 hover:text-white'}`}
-                                        >
-                                            Patriarca
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-2 bg-gray-900/80 px-4 py-2 rounded-xl border border-gray-800">
-                                <span className={`w-2.5 h-2.5 rounded-full ${dbConfigured ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
-                                <span className="text-xs font-semibold text-gray-300">
-                                    {dbConfigured ? 'Nuvem Conectada' : 'Modo Local (Offline)'}
-                                </span>
-                            </div>
-
-                            <button
-                                onClick={triggerReset}
-                                className="bg-red-950/40 hover:bg-red-900 border border-red-850 text-red-300 text-xs font-bold px-4 py-2 rounded-xl transition-all"
-                            >
-                                Resetar Banco
-                            </button>
-
-                            <button
-                                onClick={handleSignOut}
-                                className="bg-slate-800 hover:bg-slate-700 text-gray-300 text-xs font-bold px-4 py-2 rounded-xl transition-all"
-                            >
-                                Sair
-                            </button>
+                        <div className="flex items-center gap-3">
+                            <button onClick={() => getSupabase().auth.signOut()} className="bg-slate-800 hover:bg-slate-700 text-gray-300 text-xs font-bold px-4 py-2 rounded-xl transition-all">Sair</button>
                         </div>
                     </header>
 
-                    {/* Workspace Layout */}
+                    {}
                     <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
                         <div className="lg:col-span-1 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
-                            <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex-1 lg:flex-initial ${activeTab === 'dashboard' ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg' : 'bg-[#0b0e1a] text-gray-400 hover:text-white border border-[#172136]'}`}><Icons.Dashboard /> Painel Geral</button>
-                            <button onClick={() => setActiveTab('network')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex-1 lg:flex-initial ${activeTab === 'network' ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg' : 'bg-[#0b0e1a] text-gray-400 hover:text-white border border-[#172136]'}`}><Icons.Network /> Minha Rede</button>
-                            <button onClick={() => setActiveTab('calculator')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex-1 lg:flex-initial ${activeTab === 'calculator' ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg' : 'bg-[#0b0e1a] text-gray-400 hover:text-white border border-[#172136]'}`}><Icons.Calculator /> Calc. Lucros</button>
+                            <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex-1 lg:flex-initial ${activeTab === 'dashboard' ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg' : 'bg-[#0b0e1a] text-gray-400 border border-[#172136]'}`}><Icons.Dashboard /> Painel Geral</button>
+                            <button onClick={() => setActiveTab('network')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex-1 lg:flex-initial ${activeTab === 'network' ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg' : 'bg-[#0b0e1a] text-gray-400 border border-[#172136]'}`}><Icons.Network /> Minha Rede</button>
+                            <button onClick={() => setActiveTab('calculator')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex-1 lg:flex-initial ${activeTab === 'calculator' ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg' : 'bg-[#0b0e1a] text-gray-400 border border-[#172136]'}`}><Icons.Calculator /> Calc. Lucros</button>
                         </div>
 
-                        {/* Conteúdo centralizado */}
                         <div className="lg:col-span-3 space-y-6">
                             {toast.show && (
                                 <div className="bg-indigo-950 border border-indigo-700/80 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3">
@@ -1166,86 +632,69 @@
 
                             {activeTab === 'dashboard' && (
                                 <div className="space-y-6">
-                                    {hasPatriarch && network['patriarca'] && (
-                                        <div className="bg-gradient-to-r from-[#1f1604] to-[#0c1221] border border-yellow-900/40 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                            <div className="flex items-center gap-3">
-                                                <Icons.Crown />
-                                                <div>
-                                                    <h3 className="text-sm font-bold text-yellow-400">
-                                                        {sessionPerspective === 'root' ? 'Conectado ao Patriarca Bitradex' : 'Sua Conta de Patriarca Principal'}
-                                                    </h3>
-                                                    <p className="text-xs text-gray-400">
-                                                        Seu volume e pernas estão perfeitamente sincronizados na nuvem do Supabase.
-                                                    </p>
-                                                </div>
+                                    {/* MÓDULO DE INTERLIGAÇÃO (Se não tiver um Patriarca) */}
+                                    {me && !me.patriarca_id && (
+                                        <div className="bg-gradient-to-r from-[#111827] to-[#0f152e] border border-blue-900/50 p-6 rounded-2xl relative shadow-xl overflow-hidden">
+                                            <div className="absolute -right-10 -top-10 opacity-10"><Icons.Link className="w-40 h-40" /></div>
+                                            <h3 className="text-md font-bold text-blue-400 mb-2 flex items-center gap-2"><Icons.Link /> Ligar ao Patriarca (Upline)</h3>
+                                            <p className="text-xs text-gray-400 mb-4 max-w-lg">A sua conta é independente. Para se juntar à equipa de um líder e permitir que ele visualize o seu volume de rede, conecte-se abaixo inserindo o UID, Ref Code ou E-mail dele.</p>
+                                            
+                                            <div className="flex gap-2">
+                                                <input 
+                                                    type="text" 
+                                                    value={uplineSearch} 
+                                                    onChange={(e) => setUplineSearch(e.target.value)} 
+                                                    placeholder="Ex: UID-MASTER ou lider@email.com" 
+                                                    className="w-full max-w-xs bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500"
+                                                />
+                                                <button onClick={conectarAoPatriarca} className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all shadow-lg">Conectar à Rede</button>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-[10px] uppercase font-black text-gray-500">Volume Total do Patriarca</p>
-                                                <p className="text-lg font-black text-gray-200">
-                                                    ${(stats['patriarca']?.teamVol || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                                </p>
-                                                <span className="text-[10px] bg-yellow-500/10 text-yellow-400 px-2.5 py-0.5 rounded-full font-bold">
-                                                    Nível do Patriarca: {stats['patriarca']?.vipLabel || 'V0'}
-                                                </span>
+                                        </div>
+                                    )}
+
+                                    {/* MÓDULO DE STATUS SE JÁ TIVER PATRIARCA */}
+                                    {me && me.patriarca_id && (
+                                        <div className="bg-[#0b0e1a] border border-emerald-900/30 p-4 rounded-2xl flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <span className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><Icons.Check /></span>
+                                                <div>
+                                                    <h3 className="text-xs font-bold text-emerald-400">Rede Global Conectada</h3>
+                                                    <p className="text-[10px] text-gray-500">O seu nó está corretamente pendurado numa árvore Patriarca.</p>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl relative overflow-hidden">
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
                                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Qualificação Ativa</p>
-                                            <p className="text-3xl font-extrabold text-white mt-2 flex items-center gap-2">
-                                                {stats[sessionPerspective]?.vipLabel || 'V0'}
-                                                <span className="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-bold">
-                                                    {((VIP_RULES.find(r => r.level === stats[sessionPerspective]?.level)?.rate || 0) * 100).toFixed(0)}% comissão
-                                                </span>
-                                            </p>
+                                            <p className="text-3xl font-extrabold text-white mt-2 flex items-center gap-2">{stats[session.user.id]?.vipLabel || 'V0'}</p>
                                         </div>
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl relative">
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
                                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Volume de Equipa</p>
-                                            <p className="text-3xl font-extrabold text-blue-400 mt-2">
-                                                ${(stats[sessionPerspective]?.teamVol || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                            </p>
+                                            <p className="text-3xl font-extrabold text-blue-400 mt-2">${(stats[session.user.id]?.teamVol || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                                         </div>
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl relative">
-                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Aporte Individual</p>
-                                            <p className="text-3xl font-extrabold text-emerald-400 mt-2">
-                                                ${getPersonalSum(network[sessionPerspective]).toLocaleString()}
-                                            </p>
-                                            <p className="text-[9px] text-emerald-500/80 mt-1">Soma das {network[sessionPerspective]?.custodias?.length || 0} custódias ativas</p>
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
+                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">O Meu Aporte</p>
+                                            <p className="text-3xl font-extrabold text-emerald-400 mt-2">${getPersonalSum(network[session.user.id]).toLocaleString()}</p>
                                         </div>
                                     </div>
 
                                     {roadmap && (
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl p-6 relative">
-                                            <div className="absolute top-4 right-4 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold px-3 py-1 rounded-xl">
-                                                ⚠️ Aportes de carteira não somam no volume de equipe para progredir
-                                            </div>
-                                            <h3 className="text-sm font-bold text-gray-200 mb-4 flex items-center gap-2"><Icons.Lock /> Requisitos Próximo Nível: {roadmap.nextLevel.replace('VIP', 'V')}</h3>
-                                            
-                                            <div className="space-y-4">
-                                                <div className="bg-[#12192c] p-4 rounded-xl flex justify-between items-center">
-                                                    <div>
-                                                        <h4 className="text-xs font-bold text-gray-300">Investimento Pessoal</h4>
-                                                        <p className="text-xs text-gray-400 mt-1">Soma de Custódias: ${roadmap.personal.current.toLocaleString()} de ${roadmap.personal.req.toLocaleString()}</p>
-                                                    </div>
-                                                    {roadmap.personal.done ? <Icons.Check /> : <span className="text-xs text-amber-500 font-bold">Falta ${roadmap.personal.req - roadmap.personal.current}</span>}
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl p-6">
+                                            <h3 className="text-sm font-bold text-gray-200 mb-4 flex items-center gap-2"><Icons.Lock /> Requisitos para {roadmap.nextLevel.replace('VIP', 'V')}</h3>
+                                            <div className="space-y-3">
+                                                <div className="bg-[#12192c] p-4 rounded-xl flex justify-between items-center text-xs">
+                                                    <div><h4 className="font-bold text-gray-300">Investimento Pessoal</h4><p className="text-gray-500 mt-1">Acumulado: ${roadmap.personal.current.toLocaleString()} de ${roadmap.personal.req.toLocaleString()}</p></div>
+                                                    {roadmap.personal.done ? <Icons.Check /> : <span className="text-amber-500 font-bold">Falta ${roadmap.personal.req - roadmap.personal.current}</span>}
                                                 </div>
-
-                                                <div className="bg-[#12192c] p-4 rounded-xl flex justify-between items-center">
-                                                    <div>
-                                                        <h4 className="text-xs font-bold text-gray-300">Volume de Equipa</h4>
-                                                        <p className="text-xs text-gray-400 mt-1">Atual: ${roadmap.teamVol.current.toLocaleString()} de ${roadmap.teamVol.req.toLocaleString()}</p>
-                                                    </div>
-                                                    {roadmap.teamVol.done ? <Icons.Check /> : <span className="text-xs text-amber-500 font-bold">Falta ${roadmap.teamVol.req - roadmap.teamVol.current}</span>}
+                                                <div className="bg-[#12192c] p-4 rounded-xl flex justify-between items-center text-xs">
+                                                    <div><h4 className="font-bold text-gray-300">Volume de Equipa</h4><p className="text-gray-500 mt-1">Atual: ${roadmap.teamVol.current.toLocaleString()} de ${roadmap.teamVol.req.toLocaleString()}</p></div>
+                                                    {roadmap.teamVol.done ? <Icons.Check /> : <span className="text-amber-500 font-bold">Falta ${roadmap.teamVol.req - roadmap.teamVol.current}</span>}
                                                 </div>
-
-                                                <div className="bg-[#12192c] p-4 rounded-xl flex justify-between items-center">
-                                                    <div>
-                                                        <h4 className="text-xs font-bold text-gray-300">Diretos Ativos (Aporte ≥ $100)</h4>
-                                                        <p className="text-xs text-gray-400 mt-1">Parceiros ativos: {roadmap.directs.current} de {roadmap.directs.req}</p>
-                                                    </div>
-                                                    {roadmap.directs.done ? <Icons.Check /> : <span className="text-xs text-amber-500 font-bold">Falta {roadmap.directs.req - roadmap.directs.current} diretos</span>}
+                                                <div className="bg-[#12192c] p-4 rounded-xl flex justify-between items-center text-xs">
+                                                    <div><h4 className="font-bold text-gray-300">Diretos Ativos</h4><p className="text-gray-500 mt-1">Com aporte ≥ $100: {roadmap.directs.current} de {roadmap.directs.req}</p></div>
+                                                    {roadmap.directs.done ? <Icons.Check /> : <span className="text-amber-500 font-bold">Falta {roadmap.directs.req - roadmap.directs.current} diretos</span>}
                                                 </div>
                                             </div>
                                         </div>
@@ -1253,166 +702,83 @@
                                 </div>
                             )}
 
+                            {}
                             {activeTab === 'network' && (
                                 <div className="space-y-4">
-                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#0b0e1a] p-4 border border-[#161f35] rounded-2xl gap-4">
+                                    <div className="flex flex-col md:flex-row justify-between bg-[#0b0e1a] p-4 border border-[#161f35] rounded-2xl gap-4">
                                         <div>
-                                            <h3 className="text-sm font-bold text-gray-300">Estrutura de Rede Bitradex</h3>
-                                            <p className="text-xs text-gray-500 mt-0.5">Gestão avançada em tempo real sincronizada na nuvem.</p>
+                                            <h3 className="text-sm font-bold text-gray-300">A Sua Ramificação</h3>
+                                            <p className="text-[10px] text-gray-500 mt-0.5">Visão isolada e segura. As linhas paralelas do seu Patriarca não são visíveis aqui.</p>
                                         </div>
-
                                         <div className="bg-slate-950 p-1 rounded-xl flex border border-slate-800">
-                                            <button onClick={() => setViewMode('table')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'table' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-400 hover:text-gray-350'}`}>Tabela CRM</button>
-                                            <button onClick={() => setViewMode('chart')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'chart' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-400 hover:text-gray-350'}`}>Árvore Gráfica</button>
+                                            <button onClick={() => setViewMode('table')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'text-gray-400'}`}>Tabela CRM</button>
+                                            <button onClick={() => setViewMode('chart')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'chart' ? 'bg-indigo-600 text-white' : 'text-gray-400'}`}>Árvore Gráfica</button>
                                         </div>
-
-                                        <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                                            <button onClick={togglePatriarch} className={`text-xs px-3 py-2 rounded-xl font-bold border transition-all ${hasPatriarch ? 'bg-yellow-950/40 border-yellow-850 text-yellow-400' : 'bg-slate-800 border-slate-700 text-gray-400'}`}>
-                                                {hasPatriarch ? 'Ocultar Patriarca' : 'Exibir Patriarca'}
-                                            </button>
-                                            <button onClick={exportToExcel} className="bg-green-700 hover:bg-green-600 text-white text-xs px-3 py-2 rounded-xl font-bold transition-all">Exportar Excel</button>
-                                            <button onClick={() => openAddModal(sessionPerspective)} className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-2 rounded-xl font-bold transition-all">Adicionar Direto</button>
-                                        </div>
+                                        <button onClick={() => openAddModal(session.user.id)} className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-2 rounded-xl font-bold transition-all">Novo Indicado Manual</button>
                                     </div>
 
                                     {viewMode === 'table' ? (
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl overflow-hidden shadow-xl">
-                                            <div className="overflow-x-auto p-4">
-                                                <table className="w-full text-left">
-                                                    <thead>
-                                                        <tr className="border-b border-slate-800 text-[10px] text-gray-400 uppercase font-black tracking-widest">
-                                                            <th className="p-3">Nome / Detalhes</th>
-                                                            <th className="p-3">Aporte Total (Custódias)</th>
-                                                            <th className="p-3 text-right">Volume de Equipa</th>
-                                                            <th className="p-3 text-center">Níveis de Indicação (1º | 2º | 3º+)</th>
-                                                            <th className="p-3 text-center">Classificação VIP</th>
-                                                            <th className="p-3 text-right">Ações</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {Object.keys(network)
-                                                            .filter(key => visibleMembers.has(key))
-                                                            .map(key => {
-                                                                const user = network[key];
-                                                                const userStats = stats[key];
-                                                                if (!user || !userStats) return null;
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl overflow-hidden shadow-xl overflow-x-auto">
+                                            <table className="w-full text-left">
+                                                <thead className="bg-[#12192c]">
+                                                    <tr className="text-[10px] text-gray-400 uppercase font-black">
+                                                        <th className="p-3">Membro (Hierarquia)</th>
+                                                        <th className="p-3">Aporte Total</th>
+                                                        <th className="p-3 text-right">Volume</th>
+                                                        <th className="p-3 text-center">Níveis 1/2/3+</th>
+                                                        <th className="p-3 text-center">Nível VIP</th>
+                                                        <th className="p-3 text-right">Ações</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {Object.keys(network).filter(key => visibleMembers.has(key)).map(key => {
+                                                        const user = network[key];
+                                                        const userStats = stats[key];
+                                                        if (!user || !userStats) return null;
 
-                                                                const isPatriarch = key === 'patriarca';
-                                                                const isIndependentLeg = key === 'b_independent_leg';
-                                                                const isRoot = key === 'root';
-                                                                const isDirectOfRoot = network['root']?.children.includes(key);
+                                                        const isRoot = key === session.user.id;
+                                                        const isIndependent = user.userId !== session.user.id && !isRoot;
+                                                        const isDirectOfRoot = network[session.user.id]?.children.includes(key);
+                                                        let indent = isRoot ? 0 : (isDirectOfRoot ? 1 : 2);
 
-                                                                let indent = 0;
-                                                                if (sessionPerspective === 'patriarca') {
-                                                                    if (isIndependentLeg || isRoot) indent = 1;
-                                                                    else if (isDirectOfRoot) indent = 2;
-                                                                    else if (!isPatriarch) indent = 3;
-                                                                } else {
-                                                                    if (isDirectOfRoot) indent = 1;
-                                                                    else if (!isRoot) indent = 2;
-                                                                }
-
-                                                                const userPersonalSum = getPersonalSum(user);
-
-                                                                return (
-                                                                    <tr key={key} className={`border-b border-slate-800/40 transition-colors ${isPatriarch ? 'bg-yellow-950/5 hover:bg-yellow-950/10' : 'hover:bg-slate-800/20'}`}>
-                                                                        <td className="p-3 whitespace-nowrap" style={{ paddingLeft: `${indent * 24 + 12}px` }}>
-                                                                            <div className="flex items-center text-xs font-semibold text-gray-200">
-                                                                                {isPatriarch ? (
-                                                                                    <span className="w-2.5 h-2.5 bg-yellow-500 rounded-full mr-2"></span>
-                                                                                ) : (
-                                                                                    <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full mr-2"></span>
-                                                                                )}
-                                                                                {user.name}
-                                                                            </div>
-                                                                            <div className="text-[9px] text-gray-500 ml-3.5 mt-0.5 flex gap-2 font-medium">
-                                                                                <span>UID: {user.uid}</span>
-                                                                                <span>Ref: {user.refCode}</span>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td className="p-2">
-                                                                            <div className="flex items-center gap-2 text-xs font-bold text-gray-200 pl-2">
-                                                                                <span>${userPersonalSum.toLocaleString()}</span>
-                                                                                <button 
-                                                                                    onClick={() => openEditModal(key)}
-                                                                                    className="text-[9px] bg-indigo-950/50 border border-indigo-900 text-indigo-400 px-2 py-0.5 rounded-lg hover:bg-indigo-900 transition-colors font-bold"
-                                                                                    title="Ver Custódias"
-                                                                                >
-                                                                                    {user.custodias?.length || 0} cust. ⚙️
-                                                                                </button>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td className="p-3 text-xs text-right font-mono text-blue-400 font-bold">
-                                                                            ${userStats.teamVol.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                                                        </td>
-                                                                        <td className="p-3 text-[11px] text-center whitespace-nowrap">
-                                                                            <div className="inline-flex gap-2 font-mono">
-                                                                                <span className="bg-[#0e1222] border border-slate-800 px-2 py-0.5 rounded text-gray-300" title="1º Nível">1º: <b>{userStats.level1}</b></span>
-                                                                                <span className="bg-[#0e1222] border border-slate-800 px-2 py-0.5 rounded text-blue-400" title="2º Nível">2º: <b>{userStats.level2}</b></span>
-                                                                                <span className="bg-[#0e1222] border border-slate-800 px-2 py-0.5 rounded text-indigo-400" title="3º Nível+">3º+: <b>{userStats.level3Plus}</b></span>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td className="p-3 text-center font-bold">
-                                                                            <span className={`px-2 py-0.5 rounded text-[10px] ${userStats.level === 'Membro' ? 'bg-slate-800 text-slate-500' : 'bg-indigo-600/20 text-indigo-400'}`}>
-                                                                                {userStats.vipLabel}
-                                                                            </span>
-                                                                        </td>
-                                                                        <td className="p-3 text-right">
-                                                                            <div className="flex justify-end gap-2 text-xs">
-                                                                                <button onClick={() => openEditModal(key)} className="text-gray-400 hover:text-amber-400 font-bold px-2 py-1 bg-slate-800/80 rounded border border-slate-700/50 transition-all">Editar</button>
-                                                                                <button onClick={() => openAddModal(key)} className="text-gray-300 hover:text-indigo-400 font-bold px-2 py-1 bg-slate-800/80 rounded border border-slate-700/50 transition-all">+ Sub</button>
-                                                                                {key !== sessionPerspective && !isPatriarch && !isIndependentLeg && (
-                                                                                    <button onClick={() => handleRemoveMember(key)} className="text-gray-500 hover:text-red-400 p-1"><Icons.Trash /></button>
-                                                                                )}
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                );
-                                                            })}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                                        return (
+                                                            <tr key={key} className="border-b border-slate-800/40 hover:bg-slate-800/20">
+                                                                <td className="p-3 whitespace-nowrap" style={{ paddingLeft: `${indent * 20 + 12}px` }}>
+                                                                    <div className="flex items-center text-xs font-bold text-gray-200">
+                                                                        <span className={`w-1.5 h-1.5 rounded-full mr-2 ${isRoot ? 'bg-indigo-500' : (isIndependent ? 'bg-emerald-500' : 'bg-gray-500')}`}></span>
+                                                                        {user.name} {isIndependent && <span className="ml-2 text-[8px] bg-emerald-900/40 text-emerald-400 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">SaaS Próprio</span>}
+                                                                    </div>
+                                                                    <div className="text-[9px] text-gray-500 ml-3.5 mt-0.5 font-medium">UID: {user.uid} | Ref: {user.refCode}</div>
+                                                                </td>
+                                                                <td className="p-3 text-xs font-bold text-gray-200">${getPersonalSum(user).toLocaleString()}</td>
+                                                                <td className="p-3 text-xs text-right font-mono text-blue-400 font-bold">${userStats.teamVol.toLocaleString()}</td>
+                                                                <td className="p-3 text-[10px] text-center whitespace-nowrap font-mono text-gray-400">{userStats.level1} / {userStats.level2} / {userStats.level3Plus}</td>
+                                                                <td className="p-3 text-center"><span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-600/20 text-indigo-400">{userStats.vipLabel}</span></td>
+                                                                <td className="p-3 text-right">
+                                                                    <div className="flex justify-end gap-2 text-xs">
+                                                                        {!isIndependent && <button onClick={() => openEditModal(key)} className="text-gray-400 hover:text-amber-400 font-bold px-2 py-1 bg-slate-800 rounded">Editar</button>}
+                                                                        {!isIndependent && <button onClick={() => openAddModal(key)} className="text-gray-300 hover:text-indigo-400 font-bold px-2 py-1 bg-slate-800 rounded">+ Sub</button>}
+                                                                        {!isRoot && !isIndependent && <button onClick={() => handleRemoveMember(key)} className="text-gray-500 hover:text-red-400 px-2">🗑️</button>}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     ) : (
                                         <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl shadow-xl p-4 overflow-hidden relative">
                                             <div className="absolute bottom-6 right-6 z-30 flex items-center gap-2 bg-slate-900/95 p-2 rounded-xl border border-slate-800 shadow-2xl">
-                                                <button onClick={() => setZoom(z => Math.min(2.0, z + 0.1))} className="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-black flex items-center justify-center hover:bg-indigo-600 hover:text-white text-sm" title="Zoom In">＋</button>
+                                                <button onClick={() => setZoom(z => Math.min(2.0, z + 0.1))} className="w-8 h-8 rounded-lg bg-indigo-600/30 text-indigo-300 font-black">＋</button>
                                                 <span className="text-xs text-gray-300 font-bold font-mono px-1 w-12 text-center select-none">{Math.round(zoom * 100)}%</span>
-                                                <button onClick={() => setZoom(z => Math.max(0.4, z - 0.1))} className="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-black flex items-center justify-center hover:bg-indigo-600 hover:text-white text-sm" title="Zoom Out">－</button>
-                                                <button onClick={() => { setZoom(1.0); setPanOffset({ x: 0, y: 0 }); }} className="text-[10px] bg-slate-800 border border-slate-700 text-gray-300 px-3 py-1.5 rounded-lg hover:bg-slate-700 font-bold">Centrar</button>
+                                                <button onClick={() => setZoom(z => Math.max(0.4, z - 0.1))} className="w-8 h-8 rounded-lg bg-indigo-600/30 text-indigo-300 font-black">－</button>
+                                                <button onClick={() => { setZoom(1.0); setPanOffset({ x: 0, y: 0 }); }} className="text-[10px] bg-slate-800 text-gray-300 px-3 py-1.5 rounded-lg font-bold">Centrar</button>
                                             </div>
-
-                                            <div className="absolute top-4 left-4 z-35 text-[10px] text-gray-400 font-semibold flex items-center gap-2 pointer-events-none bg-slate-900/90 px-3 py-2 rounded-xl border border-slate-800/80 shadow-md">
-                                                <span>🖱️ Use o rato/arrasto ou toque para navegar na árvore</span>
-                                            </div>
-
-                                            <div 
-                                                className={`relative bg-slate-950/40 rounded-xl border border-slate-900 min-h-[620px] select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} overflow-hidden`}
-                                                onMouseDown={handleMouseDown}
-                                                onMouseMove={handleMouseMove}
-                                                onMouseUp={handleMouseUp}
-                                                onMouseLeave={handleMouseUp}
-                                                onTouchStart={handleTouchStart}
-                                                onTouchMove={handleTouchMove}
-                                                onTouchEnd={handleMouseUp}
-                                            >
-                                                <div 
-                                                    className="absolute inset-0 flex justify-center items-start pt-16 transition-transform duration-75 ease-out"
-                                                    style={{
-                                                        transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
-                                                        transformOrigin: 'top center',
-                                                    }}
-                                                >
+                                            <div className={`relative bg-slate-950/40 rounded-xl border border-slate-900 min-h-[620px] select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} overflow-hidden`} {...handleMouseEvents}>
+                                                <div className="absolute inset-0 flex justify-center items-start pt-16 transition-transform duration-75 ease-out" style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: 'top center' }}>
                                                     <div className="inline-block pointer-events-auto">
-                                                        <TreeMemberCard 
-                                                            memberId={sessionPerspective}
-                                                            network={network}
-                                                            stats={stats}
-                                                            onEdit={openEditModal}
-                                                            onAddSub={openAddModal}
-                                                            onRemove={handleRemoveMember}
-                                                            currentUserId={sessionPerspective}
-                                                        />
+                                                        <TreeMemberCard memberId={session.user.id} network={network} stats={stats} onEdit={openEditModal} onAddSub={openAddModal} onRemove={handleRemoveMember} currentUserId={session.user.id} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -1421,202 +787,77 @@
                                 </div>
                             )}
 
-                            {/* TAB 3: CALCULADORA DE LUCROS */}
+                            {}
                             {activeTab === 'calculator' && (
                                 <div className="space-y-6 bg-[#0b0e1a] border border-[#161f35] rounded-2xl p-6 shadow-xl">
-                                    <h3 className="text-md font-bold text-gray-200">Simulador Financeiro Global</h3>
-                                    
-                                    <div className="bg-[#12192c] p-4 rounded-xl space-y-3 border border-slate-800">
-                                        <div className="flex justify-between items-center text-xs">
-                                            <span className="font-bold text-gray-300 font-mono">Rendimento Diário do AI Bot na Equipe (Comissões VIP)</span>
-                                            <span className="bg-indigo-600 text-white font-black px-2.5 py-1 rounded-full font-mono">{botYield}%</span>
+                                    <h3 className="text-md font-bold text-gray-200">Projeção Financeira sobre a Sua Rede</h3>
+                                    <div className="bg-[#12192c] p-4 rounded-xl border border-slate-800">
+                                        <div className="flex justify-between items-center text-xs mb-3">
+                                            <span className="font-bold text-gray-300">Rendimento Diário do AI Bot na Equipe</span>
+                                            <span className="bg-indigo-600 text-white font-black px-2 py-1 rounded">{botYield}%</span>
                                         </div>
-                                        <input
-                                            type="range"
-                                            min="0.5"
-                                            max="3.0"
-                                            step="0.1"
-                                            value={botYield}
-                                            onChange={(e) => setBotYield(parseFloat(e.target.value))}
-                                            className="w-full accent-indigo-600 bg-gray-800 h-2 rounded-lg appearance-none cursor-pointer"
-                                        />
+                                        <input type="range" min="0.5" max="3.0" step="0.1" value={botYield} onChange={(e) => setBotYield(parseFloat(e.target.value))} className="w-full accent-indigo-600 bg-gray-800 h-2 rounded-lg cursor-pointer" />
                                     </div>
-
-                                    <div className="bg-gradient-to-r from-[#0a1d37] to-[#040c1a] border border-blue-900/60 p-5 rounded-2xl relative">
-                                        <div className="absolute top-3 right-4 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Aportes Ativos</div>
-                                        <h4 className="text-xs font-black uppercase text-blue-300 tracking-widest">Lucros das Suas Custódias Pessoais</h4>
-                                        <p className="text-[10px] text-gray-400 mt-1">Estimativa de ganhos diretos da sua carteira acumulada de <b>${getPersonalSum(network[sessionPerspective]).toLocaleString()}</b></p>
-                                        
-                                        <div className="grid grid-cols-2 gap-4 mt-4 text-left font-mono">
-                                            <div>
-                                                <span className="text-[9px] text-gray-500 block uppercase">Lucro Pessoal Diário</span>
-                                                <span className="text-xl font-bold text-white">${earnings.personalDaily.toLocaleString(undefined, { minimumFractionDigits: 2 })}/dia</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-[9px] text-gray-500 block uppercase">Lucro Pessoal Mensal</span>
-                                                <span className="text-xl font-bold text-emerald-400">${earnings.personalMonthly.toLocaleString(undefined, { minimumFractionDigits: 2 })}/mês</span>
-                                            </div>
+                                    <div className="grid grid-cols-2 gap-4 text-center font-mono">
+                                        <div className="bg-[#0a1d37] border border-blue-900/60 p-5 rounded-2xl">
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold mb-2">Lucro Custódias (Diário)</p>
+                                            <p className="text-2xl font-black text-emerald-400">${earnings.personalDaily.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                                        </div>
+                                        <div className="bg-slate-950 border border-slate-900 p-5 rounded-2xl">
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold mb-2">Comissões de Rede (Diário)</p>
+                                            <p className="text-2xl font-black text-indigo-400">${earnings.teamDaily.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                                         </div>
                                     </div>
-
-                                    <div className="space-y-4">
-                                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-slate-800 pb-2">Ganhos Comissionários sobre a Rede</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono">
-                                            <div className="bg-slate-950 p-4 rounded-xl border border-slate-900">
-                                                <h4 className="text-xs font-bold text-gray-400 uppercase">Diretos N1 (10% Rend.)</h4>
-                                                <p className="text-xl font-bold text-indigo-300 mt-2">
-                                                    ${earnings.direct.toLocaleString(undefined, { minimumFractionDigits: 2 })}/dia
-                                                </p>
-                                            </div>
-                                            <div className="bg-slate-950 p-4 rounded-xl border border-slate-900">
-                                                <h4 className="text-xs font-bold text-gray-400 uppercase">Indiretos N2 (5% Rend.)</h4>
-                                                <p className="text-xl font-bold text-indigo-300 mt-2">
-                                                    ${earnings.indirect.toLocaleString(undefined, { minimumFractionDigits: 2 })}/dia
-                                                </p>
-                                            </div>
-                                            <div className="bg-slate-950 p-4 rounded-xl border border-slate-900">
-                                                <h4 className="text-xs font-bold text-indigo-400 uppercase">Diferencial VIP Liderança</h4>
-                                                <p className="text-xl font-bold text-indigo-300 mt-2">
-                                                    ${(earnings.diff + earnings.matchingSameLevel).toLocaleString(undefined, { minimumFractionDigits: 2 })}/dia
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-gradient-to-r from-indigo-950 to-[#0e172a] p-6 rounded-2xl border border-indigo-900/40 text-center">
-                                        <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest">Ganhos Totais Projetados (Custódias + Rede)</p>
-                                        <div className="grid grid-cols-2 gap-4 mt-4 font-mono">
-                                            <div>
-                                                <p className="text-sm text-gray-400 font-sans">Total Diário</p>
-                                                <p className="text-2xl font-black text-emerald-400">${earnings.totalDaily.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-400 font-sans">Total Mensal (30d)</p>
-                                                <p className="text-3xl font-black text-emerald-400">${earnings.totalMonthly.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                                            </div>
-                                        </div>
+                                    <div className="bg-gradient-to-r from-indigo-950 to-[#0e172a] p-6 rounded-2xl border border-indigo-900/40 text-center font-mono">
+                                        <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2">Estimativa Mensal (30 dias)</p>
+                                        <p className="text-4xl font-black text-emerald-400">${earnings.totalMonthly.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                                     </div>
                                 </div>
                             )}
                         </div>
                     </main>
 
-                    {/* CRM Modal / Editor de Membros */}
+                    {}
                     {showModal && (
                         <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
                             <div className="bg-[#0b0e1a] border border-[#1c273e] rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
-                                <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                                    <h3 className="font-bold text-lg text-gray-200">
-                                        {modalMode === 'add' ? 'Cadastrar Novo Indicado' : `Editar Dados de: ${form.name}`}
-                                    </h3>
-                                    <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-350">
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                                    <div className="md:col-span-2">
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Nome Completo do Membro *</label>
-                                        <input type="text" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none text-gray-200" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Código de Indicação (Ref)</label>
-                                        <input type="text" value={form.refCode} onChange={(e) => setForm({...form, refCode: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none text-gray-200" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Código UID</label>
-                                        <input type="text" value={form.uid} onChange={(e) => setForm({...form, uid: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none text-gray-200" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">E-mail</label>
-                                        <input type="email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none text-gray-200" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Telefone</label>
-                                        <input type="text" value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none text-gray-200" />
-                                    </div>
-
-                                    {/* Módulo de Custódias */}
-                                    <div className="md:col-span-2 bg-[#12192c] p-4 rounded-xl border border-slate-800 space-y-4">
-                                        <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-                                            <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Custódias Ativas</h4>
-                                            <span className="text-[10px] text-gray-400 font-mono">Qtd: {formCustodias.length}</span>
-                                        </div>
-
-                                        <div className="space-y-3 max-h-[200px] overflow-y-auto no-scrollbar pr-1">
-                                            {formCustodias.map((cust, idx) => (
-                                                <div key={cust.id} className="bg-slate-950 p-3 rounded-lg border border-slate-800/80 flex flex-col gap-2 relative">
-                                                    <button 
-                                                        onClick={() => {
-                                                            if (formCustodias.length === 1) return showNotification("Mantenha pelo menos 1 custódia ativa.");
-                                                            setFormCustodias(formCustodias.filter(c => c.id !== cust.id));
-                                                        }}
-                                                        className="absolute top-2 right-2 text-red-500 hover:text-red-400 text-[10px] font-bold"
-                                                    >
-                                                        🗑️ Remover
-                                                    </button>
-                                                    <div className="grid grid-cols-12 gap-2 mt-2">
-                                                        <div className="col-span-6">
-                                                            <label className="block text-[8px] text-gray-500 uppercase font-black mb-1">Nome/Rótulo</label>
-                                                            <input type="text" value={cust.label} onChange={(e) => {
-                                                                const updated = [...formCustodias];
-                                                                updated[idx].label = e.target.value;
-                                                                setFormCustodias(updated);
-                                                            }} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-gray-200 focus:outline-none" />
-                                                        </div>
-                                                        <div className="col-span-3">
-                                                            <label className="block text-[8px] text-gray-500 uppercase font-black mb-1">Aporte ($)</label>
-                                                            <input type="number" value={cust.value} onChange={(e) => {
-                                                                const updated = [...formCustodias];
-                                                                updated[idx].value = parseFloat(e.target.value) || 0;
-                                                                setFormCustodias(updated);
-                                                            }} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-gray-200 focus:outline-none" />
-                                                        </div>
-                                                        <div className="col-span-3">
-                                                            <label className="block text-[8px] text-gray-500 uppercase font-black mb-1">Taxa Rend. (%)</label>
-                                                            <input type="number" value={cust.rate} onChange={(e) => {
-                                                                const updated = [...formCustodias];
-                                                                updated[idx].rate = parseFloat(e.target.value) || 0;
-                                                                setFormCustodias(updated);
-                                                            }} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-gray-200 focus:outline-none" />
-                                                        </div>
-                                                    </div>
+                                <h3 className="font-bold text-lg text-gray-200 border-b border-slate-800 pb-3">{modalMode === 'add' ? 'Adicionar Ligação Manual' : `Editar: ${form.name}`}</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-2"><label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Nome Completo *</label><input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" /></div>
+                                    <div><label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Código Ref</label><input type="text" value={form.refCode} onChange={e => setForm({...form, refCode: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200" /></div>
+                                    <div><label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Código UID</label><input type="text" value={form.uid} onChange={e => setForm({...form, uid: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200" /></div>
+                                    
+                                    <div className="col-span-2 bg-[#12192c] p-4 rounded-xl border border-slate-800 space-y-3 mt-2">
+                                        <div className="flex justify-between items-center"><h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Custódias da Conta</h4></div>
+                                        {formCustodias.map((cust, idx) => (
+                                            <div key={cust.id} className="bg-slate-950 p-3 rounded-lg border border-slate-800/80 flex flex-col gap-2 relative">
+                                                <button onClick={() => { if(formCustodias.length>1) setFormCustodias(formCustodias.filter(c => c.id !== cust.id)) }} className="absolute top-2 right-2 text-red-500 text-[10px] font-bold">Remover</button>
+                                                <div className="grid grid-cols-12 gap-2 mt-2">
+                                                    <div className="col-span-6"><label className="block text-[8px] text-gray-500 uppercase font-black mb-1">Rótulo</label><input type="text" value={cust.label} onChange={(e) => { const u = [...formCustodias]; u[idx].label = e.target.value; setFormCustodias(u); }} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-gray-200" /></div>
+                                                    <div className="col-span-3"><label className="block text-[8px] text-gray-500 uppercase font-black mb-1">Aporte($)</label><input type="number" value={cust.value} onChange={(e) => { const u = [...formCustodias]; u[idx].value = parseFloat(e.target.value)||0; setFormCustodias(u); }} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-gray-200" /></div>
+                                                    <div className="col-span-3"><label className="block text-[8px] text-gray-500 uppercase font-black mb-1">Taxa(%)</label><input type="number" value={cust.rate} onChange={(e) => { const u = [...formCustodias]; u[idx].rate = parseFloat(e.target.value)||0; setFormCustodias(u); }} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-gray-200" /></div>
                                                 </div>
-                                            ))}
-                                        </div>
-
-                                        <button 
-                                            type="button"
-                                            onClick={() => setFormCustodias([...formCustodias, { id: 'c_' + Date.now() + Math.random().toString(36).substring(2, 4), label: 'Nova Custódia', value: 100, rate: 15 }])}
-                                            className="w-full border border-dashed border-indigo-500/40 hover:border-indigo-500/80 hover:bg-indigo-950/20 text-indigo-400 py-2 rounded-xl text-xs font-bold transition-all"
-                                        >
-                                            + Adicionar Outra Custódia
-                                        </button>
-
-                                        <div className="pt-2 border-t border-slate-800 flex justify-between text-[11px] font-bold text-gray-400">
-                                            <span>Soma Aportes: <span className="text-emerald-400">${formCustodias.reduce((s, c) => s + (parseFloat(c.value) || 0), 0).toLocaleString()}</span></span>
-                                            <span>Rend. Estimado: <span className="text-indigo-400">${formCustodias.reduce((s, c) => s + ((parseFloat(c.value) || 0) * (parseFloat(c.rate) || 0) / 100), 0).toLocaleString()}/mês</span></span>
-                                        </div>
+                                            </div>
+                                        ))}
+                                        <button onClick={() => setFormCustodias([...formCustodias, { id: 'c_' + Date.now(), label: 'Nova Custódia', value: 100, rate: 15 }])} className="w-full border border-dashed border-indigo-500/40 text-indigo-400 py-2 rounded-xl text-xs font-bold">+ Adicionar Banca</button>
                                     </div>
                                 </div>
-
-                                <div className="flex gap-3 justify-end text-xs font-bold pt-4 border-t border-slate-850">
-                                    <button onClick={() => setShowModal(false)} className="bg-slate-950 hover:bg-slate-900 text-gray-400 border border-slate-800 px-5 py-2.5 rounded-xl">Cancelar</button>
-                                    <button onClick={handleSaveMember} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-900/30">Gravar Dados</button>
+                                <div className="flex gap-3 justify-end pt-4 border-t border-slate-850">
+                                    <button onClick={() => setShowModal(false)} className="bg-slate-950 text-gray-400 border border-slate-800 px-5 py-2.5 rounded-xl text-xs font-bold">Cancelar</button>
+                                    <button onClick={handleSaveMember} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl shadow-lg text-xs font-bold">Gravar e Sincronizar</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Modal de Confirmações */}
                     {confirmModal.show && (
-                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
                             <div className="bg-[#0b0e1a] border border-red-900 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
-                                <h3 className="font-bold text-lg text-red-400 flex items-center gap-2">⚠️ {confirmModal.title}</h3>
-                                <p className="text-sm text-gray-300 leading-relaxed">{confirmModal.message}</p>
-                                <div className="flex gap-3 justify-end text-xs font-bold pt-2">
-                                    <button onClick={() => setConfirmModal({ show: false, title: '', message: '', action: null })} className="bg-slate-800 hover:bg-slate-705 text-gray-300 px-4 py-2 rounded-xl">Cancelar</button>
-                                    <button onClick={() => { if (confirmModal.action) confirmModal.action(); setConfirmModal({ show: false, title: '', message: '', action: null }); }} className="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded-xl">Confirmar</button>
+                                <h3 className="font-bold text-lg text-red-400">⚠️ {confirmModal.title}</h3>
+                                <p className="text-sm text-gray-300">{confirmModal.message}</p>
+                                <div className="flex gap-3 justify-end pt-2">
+                                    <button onClick={() => setConfirmModal({ show: false, title: '', message: '', action: null })} className="bg-slate-800 text-gray-300 px-4 py-2 rounded-xl text-xs font-bold">Cancelar</button>
+                                    <button onClick={() => { confirmModal.action(); setConfirmModal({ show: false, title: '', message: '', action: null }); }} className="bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold">Confirmar</button>
                                 </div>
                             </div>
                         </div>
@@ -1626,7 +867,7 @@
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />); 
+        root.render(<App />);
     </script>
 </body>
 </html>
