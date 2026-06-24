@@ -9,100 +9,668 @@
     <!-- React e ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <!-- Babel para JSX -->
+    <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js" crossorigin></script>
-    <!-- Supabase SDK -->
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <!-- SheetJS -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #03050a; color: #f3f4f6; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
-<body class="min-h-screen">
-    <div id="root"></div>
+<body class="min-h-screen flex flex-col">
+    <div id="root" class="flex-1 flex flex-col"></div>
 
     <script type="text/babel" data-presets="react">
-        const { useState, useEffect } = React;
+        const { useState, useMemo, useEffect } = React;
 
-        const SUPABASE_URL = "https://ntqiunpljjehuiqdjetc.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50cWl1bnBsamplaHVpcWRqZXRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjY0NDAsImV4cCI6MjA5NzgwMjQ0MH0.N39lOduuu-pLysAWP6t0PSe6HFdmQELYXsXJ7IwDwpY";
+        // =========================================================================
+        // CREDENCIAIS SUPABASE (Mantenha as suas originais)
+        // =========================================================================
+        if (!window.SUPABASE_URL) window.SUPABASE_URL = "https://ntqiunpljjehuiqdjetc.supabase.co";
+        if (!window.SUPABASE_ANON_KEY) window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50cWl1bnBsamplaHVpcWRqZXRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjY0NDAsImV4cCI6MjA5NzgwMjQ0MH0.N39lOduuu-pLysAWP6t0PSe6HFdmQELYXsXJ7IwDwpY";
         
-        const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const getSupabase = () => {
+            if (window.supabaseClient) return window.supabaseClient;
+            const lib = window.supabase || window.Supabase;
+            if (lib && window.SUPABASE_URL) {
+                try {
+                    window.supabaseClient = lib.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+                    return window.supabaseClient;
+                } catch (e) { console.error("Falha Supabase:", e); }
+            }
+            return null;
+        };
 
-        const App = () => {
-            const [user, setUser] = useState(null);
-            const [network, setNetwork] = useState(null);
-            const [loading, setLoading] = useState(true);
+        const Icons = {
+            Dashboard: () => (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>),
+            Network: () => (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>),
+            Link: () => (<svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>),
+            Check: () => (<svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>),
+            Lock: () => (<svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>)
+        };
 
-            useEffect(() => {
-                client.auth.getSession().then(({ data: { session } }) => setUser(session?.user || null));
-                client.auth.onAuthStateChange((_event, session) => setUser(session?.user || null));
-            }, []);
+        const VIP_RULES = [
+            { level: 'VIP6', rate: 0.6, reqDirects: 10, reqTeamVol: 15000000, reqPersonal: 3200, prevVip: 'VIP5' },
+            { level: 'VIP5', rate: 0.5, reqDirects: 9, reqTeamVol: 6000000, reqPersonal: 1600, prevVip: 'VIP4' },
+            { level: 'VIP4', rate: 0.4, reqDirects: 8, reqTeamVol: 2000000, reqPersonal: 800, prevVip: 'VIP3' },
+            { level: 'VIP3', rate: 0.3, reqDirects: 7, reqTeamVol: 500000, reqPersonal: 400, prevVip: 'VIP2' },
+            { level: 'VIP2', rate: 0.2, reqDirects: 6, reqTeamVol: 150000, reqPersonal: 200, prevVip: 'VIP1' },
+            { level: 'VIP1', rate: 0.1, reqDirects: 5, reqTeamVol: 50000, reqPersonal: 100, prevVip: null },
+            { level: 'Membro', rate: 0.0, reqDirects: 0, reqTeamVol: 0, reqPersonal: 0, prevVip: null },
+        ];
 
-            useEffect(() => {
-                if (user) fetchRede();
-            }, [user]);
+        const getPersonalSum = (user) => {
+            if (!user || !user.custodias) return 0;
+            return user.custodias.reduce((sum, c) => sum + (parseFloat(c.value) || 0), 0);
+        };
 
-            const fetchRede = async () => {
-                setLoading(true);
-                const { data, error } = await client.from('simulador_rede').select('*');
-                if (error) {
-                    alert("Erro ao carregar rede: " + error.message);
-                } else {
-                    // Transforma array em mapa
-                    const map = {};
-                    data.forEach(n => map[n.id] = n);
-                    setNetwork(map);
-                }
-                setLoading(false);
-            };
+        const TreeMemberCard = ({ memberId, network, stats, onEdit, onAddSub, onRemove, currentUserId }) => {
+            const member = network[memberId];
+            const memberStats = stats[memberId];
+            const [isCollapsed, setIsCollapsed] = useState(false);
 
-            const handleSave = async (novoMembro) => {
-                // Previne strings vazias em campos Unique
-                const payload = {
-                    ...novoMembro,
-                    uid: novoMembro.uid?.trim() || `UID-${Date.now().toString().slice(-6)}`,
-                    ref_code: novoMembro.ref_code?.trim() || `REF-${Date.now().toString().slice(-4)}`
-                };
+            if (!member || !memberStats) return null;
 
-                const { error } = await client.from('simulador_rede').upsert([payload]);
-                if (error) {
-                    alert("Erro ao gravar no Supabase: " + error.message);
-                } else {
-                    alert("Dados guardados com sucesso!");
-                    fetchRede();
-                }
-            };
-
-            if (!user) return (
-                <div className="flex flex-col items-center justify-center h-screen text-white">
-                    <h1 className="text-3xl font-black mb-6">Bitradex Login</h1>
-                    <button 
-                        onClick={() => client.auth.signInAnonymously()}
-                        className="bg-indigo-600 px-8 py-3 rounded-xl font-bold"
-                    >
-                        Entrar como Convidado
-                    </button>
-                </div>
-            );
+            const isRootOfSession = memberId === currentUserId;
+            const isIndependentUser = member.userId && member.userId !== currentUserId && !isRootOfSession;
+            const hasChildren = member.children && member.children.length > 0;
 
             return (
-                <div className="p-8 text-white">
-                    <h1 className="text-2xl font-black mb-4">Bem-vindo, {user.email || 'Convidado'}</h1>
-                    {loading ? <p>A carregar rede...</p> : (
-                        <div className="bg-slate-900 p-6 rounded-xl">
-                            <h2 className="font-bold mb-4">A sua rede no banco de dados:</h2>
-                            <pre className="text-xs bg-black p-4 rounded">{JSON.stringify(network, null, 2)}</pre>
-                            <button 
-                                onClick={() => handleSave({id: user.id, name: 'Teste Novo', uid: '', ref_code: ''})}
-                                className="mt-4 bg-emerald-600 px-4 py-2 rounded font-bold"
-                            >
-                                Adicionar Membro de Teste (Auto UID)
-                            </button>
+                <div className="flex flex-col items-center">
+                    <div className={`p-4 rounded-2xl border text-left min-w-[220px] max-w-[260px] shadow-2xl relative transition-all duration-300 z-20
+                        ${isRootOfSession ? 'bg-gradient-to-b from-[#0a182d] to-[#040914] border-indigo-500/80 shadow-indigo-950/40' 
+                            : isIndependentUser ? 'bg-gradient-to-b from-[#1b241c] to-[#0d140e] border-emerald-600/50 shadow-emerald-950/20'
+                            : 'bg-[#0e1222] border-slate-800 shadow-black/40'}`}>
+                        
+                        {hasChildren && (
+                            <button onClick={(e) => { e.stopPropagation(); setIsCollapsed(!isCollapsed); }} className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-[10px] text-gray-300 hover:bg-indigo-600 z-30">{isCollapsed ? '+' : '-'}</button>
+                        )}
+
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase bg-indigo-500/20 text-indigo-400">{memberStats.vipLabel}</span>
+                            <div className="flex gap-1">
+                                {!isIndependentUser && <button onClick={() => onEdit(memberId)} className="text-[10px] bg-slate-800/80 p-1 rounded hover:text-white">✏️</button>}
+                                {!isIndependentUser && <button onClick={() => onAddSub(memberId)} className="text-[10px] bg-indigo-950/40 p-1 rounded text-indigo-400">➕</button>}
+                                {!isRootOfSession && !isIndependentUser && <button onClick={() => onRemove(memberId)} className="text-[10px] bg-red-950/40 p-1 rounded text-red-400">🗑️</button>}
+                                {isIndependentUser && <span className="text-[8px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-black uppercase tracking-widest">SaaS</span>}
+                            </div>
+                        </div>
+
+                        <h4 className="text-xs font-bold text-gray-100 truncate mt-1">{member.name}</h4>
+                        <p className="text-[9px] text-slate-500 font-mono mt-0.5">UID: {member.uid}</p>
+                        
+                        <div className="mt-3 pt-2.5 border-t border-slate-850 grid grid-cols-2 gap-2 text-[10px]">
+                            <div><span className="text-[8px] text-slate-500 block uppercase font-extrabold tracking-wider">Aporte Total</span><span className="font-semibold text-gray-300">${getPersonalSum(member).toLocaleString()}</span></div>
+                            <div><span className="text-[8px] text-slate-500 block uppercase font-extrabold tracking-wider">Vol. Equipa</span><span className="font-semibold text-blue-400">${memberStats.teamVol.toLocaleString()}</span></div>
+                        </div>
+                    </div>
+
+                    {hasChildren && !isCollapsed && <div className="w-0.5 h-6 bg-slate-700 relative"></div>}
+
+                    {hasChildren && !isCollapsed && (
+                        <div className="flex gap-8 relative pt-2">
+                            {member.children.map((childId, index) => {
+                                const isFirst = index === 0, isLast = index === member.children.length - 1, isSingle = member.children.length === 1;
+                                return (
+                                    <div key={childId} className="relative flex flex-col items-center">
+                                        {!isSingle && <div className="absolute top-0 h-0.5 bg-slate-700" style={{ left: isFirst ? '50%' : '0', right: isLast ? '50%' : '0' }} />}
+                                        <div className="w-0.5 h-4 bg-slate-700 z-10"></div>
+                                        <TreeMemberCard memberId={childId} network={network} stats={stats} onEdit={onEdit} onAddSub={onAddSub} onRemove={onRemove} currentUserId={currentUserId} />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [session, setSession] = useState(null);
+            const [authMode, setAuthMode] = useState('login'); 
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+
+            const [network, setNetwork] = useState({});
+            const [loading, setLoading] = useState(true);
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [viewMode, setViewMode] = useState('table');
+            
+            const [uplineSearch, setUplineSearch] = useState('');
+
+            // Modais e Alertas
+            const [toast, setToast] = useState({ show: false, message: '', error: false });
+            const [showModal, setShowModal] = useState(false);
+            const [modalMode, setModalMode] = useState('add');
+            const [selectedMemberId, setSelectedMemberId] = useState('');
+            
+            const [form, setForm] = useState({ name: '', refCode: '', uid: '', email: '', phone: '' });
+            const [formCustodias, setFormCustodias] = useState([]);
+
+            const [zoom, setZoom] = useState(1.0);
+            const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+            const [isDragging, setIsDragging] = useState(false);
+            const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+            const showNotification = (msg, isError = false) => {
+                setToast({ show: true, message: msg, error: isError });
+                setTimeout(() => setToast({ show: false, message: '', error: false }), 5000);
+            };
+
+            // Monitorar autenticação Supabase
+            useEffect(() => {
+                const client = getSupabase();
+                if (!client) { setLoading(false); return; }
+
+                client.auth.getSession().then(({ data: { session } }) => {
+                    setSession(session);
+                    if (!session) setLoading(false);
+                });
+
+                client.auth.onAuthStateChange((_e, session) => {
+                    setSession(session);
+                    if (!session) setLoading(false);
+                });
+            }, []);
+
+            const fetchNetwork = async () => {
+                if (!session) return;
+                setLoading(true);
+                const client = getSupabase();
+                if (!client) return;
+
+                try {
+                    const { data, error } = await client.from('simulador_rede').select('*');
+                    
+                    if (error) {
+                        showNotification("Erro Crítico ao Ler Rede: " + error.message, true);
+                        setLoading(false);
+                        return;
+                    }
+
+                    const networkObj = {};
+                    if (data) {
+                        data.forEach(item => {
+                            networkObj[item.id] = {
+                                id: item.id,
+                                userId: item.user_id,
+                                name: item.name,
+                                uid: item.uid,
+                                refCode: item.ref_code,
+                                email: item.email,
+                                phone: item.phone,
+                                patriarca_id: item.patriarca_id,
+                                custodias: Array.isArray(item.custodias) ? item.custodias : [],
+                                children: item.children || []
+                            };
+                        });
+                    }
+
+                    // Se a conta acabou de ser criada, cria o nó inicial na base de dados
+                    const myId = session.user.id;
+                    if (!networkObj[myId]) {
+                        const baseNode = {
+                            id: myId,
+                            user_id: myId,
+                            name: 'O Meu Perfil SaaS',
+                            uid: `UID-${myId.substring(0,6).toUpperCase()}`,
+                            ref_code: `REF-${myId.substring(0,4).toUpperCase()}`,
+                            email: session.user.email,
+                            phone: '',
+                            patriarca_id: null,
+                            custodias: [{ id: 'c_main', label: 'Banca Principal', value: 0, rate: 15 }],
+                            children: [],
+                            personal: 0
+                        };
+                        
+                        const { error: upsertErr } = await client.from('simulador_rede').upsert([baseNode]);
+                        if (upsertErr) {
+                            showNotification("Erro ao criar perfil no banco: " + upsertErr.message, true);
+                        } else {
+                            networkObj[myId] = { ...baseNode, userId: myId };
+                        }
+                    }
+
+                    setNetwork(networkObj);
+                } catch (err) {
+                    showNotification("Falha geral no sistema: " + err.message, true);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            // Atualiza a rede assim que loga
+            useEffect(() => { if (session) fetchNetwork(); }, [session]);
+
+            const handleSaveMember = async () => {
+                if (!form.name.trim()) return showNotification("O nome é obrigatório.", true);
+                
+                const client = getSupabase();
+                let updatedNetwork = { ...network };
+
+                // Geração garantida de UID único caso o usuário deixe em branco
+                const finalUid = form.uid?.trim() || `UID-${Date.now().toString().slice(-5)}${Math.random().toString(36).substring(2, 4).toUpperCase()}`;
+                const finalRef = form.refCode?.trim() || `REF-${Date.now().toString().slice(-4)}${Math.random().toString(36).substring(2, 4).toUpperCase()}`;
+                const personalSum = formCustodias.reduce((s, c) => s + (parseFloat(c.value) || 0), 0);
+
+                if (modalMode === 'add') {
+                    const newId = `node_${Date.now()}`;
+                    const newNode = {
+                        id: newId, 
+                        user_id: session.user.id,
+                        name: form.name.trim(), 
+                        uid: finalUid,
+                        ref_code: finalRef, 
+                        email: form.email?.trim() || null, 
+                        phone: form.phone?.trim() || null,
+                        custodias: formCustodias, 
+                        children: [], 
+                        personal: personalSum,
+                        patriarca_id: selectedMemberId
+                    };
+                    
+                    try {
+                        // 1. Tenta inserir no Supabase PRIMEIRO
+                        const { error: insertErr } = await client.from('simulador_rede').insert([newNode]);
+                        if (insertErr) {
+                            // Se falhar (ex: UID duplicado no banco inteiro), PARA TUDO e avisa
+                            showNotification("Erro ao salvar no banco: " + insertErr.message, true);
+                            return; 
+                        }
+
+                        // 2. Tenta atualizar o pai no Supabase
+                        const newChildrenList = [...(updatedNetwork[selectedMemberId].children || []), newId];
+                        const { error: parentUpdateErr } = await client.from('simulador_rede')
+                            .update({ children: newChildrenList })
+                            .eq('id', selectedMemberId);
+                        
+                        if (parentUpdateErr) {
+                            showNotification("Erro ao vincular membro: " + parentUpdateErr.message, true);
+                            return;
+                        }
+
+                        // 3. Tudo deu certo na nuvem! Atualiza a tela.
+                        showNotification("Membro registado com sucesso!");
+                        fetchNetwork(); 
+                        setShowModal(false);
+                    } catch (e) { 
+                        showNotification("Erro crítico de conexão: " + e.message, true); 
+                    }
+                } else {
+                    // MODO EDIÇÃO
+                    try {
+                        const { error: updateErr } = await client.from('simulador_rede').update({ 
+                            name: form.name.trim(), 
+                            uid: finalUid, 
+                            ref_code: finalRef, 
+                            email: form.email?.trim() || null, 
+                            phone: form.phone?.trim() || null, 
+                            custodias: formCustodias,
+                            personal: personalSum
+                        }).eq('id', selectedMemberId);
+                        
+                        if (updateErr) {
+                            // Se der erro ao editar, exibe alerta vermelho e NÃO fecha o modal
+                            showNotification("Erro ao atualizar banco: " + updateErr.message, true);
+                            return;
+                        }
+
+                        showNotification("Dados atualizados com sucesso!");
+                        fetchNetwork();
+                        setShowModal(false);
+                    } catch (e) { 
+                        showNotification("Erro crítico de conexão: " + e.message, true); 
+                    }
+                }
+            };
+
+            const conectarAoPatriarca = async () => {
+                const uidLimpo = uplineSearch.trim().toUpperCase();
+                if (!uidLimpo) return showNotification("Introduza um UID.", true);
+                
+                setLoading(true);
+                const client = getSupabase();
+                
+                const { data, error } = await client.rpc('conectar_rede_patriarca', {
+                    novo_membro_id: session.user.id,
+                    termo_busca_patriarca: uidLimpo
+                });
+
+                setLoading(false);
+                if (error) {
+                    showNotification("Erro de Banco de Dados: " + error.message, true);
+                } else if (data && data.sucesso) {
+                    showNotification("🚀 " + data.mensagem);
+                    fetchNetwork();
+                } else {
+                    showNotification("⚠️ " + (data?.mensagem || "Líder não localizado."), true);
+                }
+            };
+
+            const visibleMembers = useMemo(() => {
+                if (!session) return new Set();
+                const visible = new Set();
+                const traverseDown = (id) => {
+                    if (!id || !network[id]) return;
+                    visible.add(id);
+                    network[id].children.forEach(cid => traverseDown(cid));
+                };
+                traverseDown(session.user.id);
+                return visible;
+            }, [network, session]);
+
+            const stats = useMemo(() => {
+                if (!session || Object.keys(network).length === 0) return {};
+                const results = {};
+
+                const calculateNode = (id) => {
+                    const node = network[id];
+                    if (!node) return { teamVol: 0, directsActive: 0, level: 'Membro', vipLabel: 'V0 (Básico)', level1: 0, level2: 0, level3Plus: 0 };
+
+                    let teamVol = 0;
+                    let directsActive = 0;
+
+                    node.children.forEach(cid => {
+                        const childStats = calculateNode(cid);
+                        const child = network[cid];
+                        if (child) {
+                            const childPersonal = getPersonalSum(child);
+                            teamVol += childPersonal + childStats.teamVol;
+                            if (childPersonal >= 100) directsActive++;
+                        }
+                    });
+
+                    let currentLevel = 'Membro';
+                    const userPersonalSum = getPersonalSum(node);
+
+                    for (const rule of VIP_RULES) {
+                        if (rule.level === 'Membro') continue;
+                        if (userPersonalSum >= rule.reqPersonal && teamVol >= rule.reqTeamVol && directsActive >= rule.reqDirects) {
+                            currentLevel = rule.level;
+                            break;
+                        }
+                    }
+
+                    let level1 = 0, level2 = 0, level3Plus = 0;
+                    const traverseDepths = (nodeId, depth) => {
+                        const targetNode = network[nodeId];
+                        if (!targetNode) return;
+                        targetNode.children.forEach(cid => {
+                            if (depth === 1) level1++;
+                            else if (depth === 2) level2++;
+                            else level3Plus++;
+                            traverseDepths(cid, depth + 1);
+                        });
+                    };
+                    traverseDepths(id, 1);
+
+                    results[id] = { teamVol, directsActive, level: currentLevel, vipLabel: currentLevel === 'Membro' ? 'V0' : currentLevel, level1, level2, level3Plus };
+                    return results[id];
+                };
+
+                if (network[session.user.id]) calculateNode(session.user.id);
+                return results;
+            }, [network, session]);
+
+            // Handlers Modal
+            const openAddModal = (parentId) => {
+                setModalMode('add'); setSelectedMemberId(parentId);
+                setForm({ name: '', refCode: '', uid: '', email: '', phone: '' });
+                setFormCustodias([{ id: 'c_' + Date.now(), label: 'Nova Custódia', value: 100, rate: 15 }]);
+                setShowModal(true);
+            };
+
+            const openEditModal = (id) => {
+                if (network[id].userId !== session.user.id) return showNotification("Não pode editar um parceiro independente.", true);
+                setModalMode('edit'); setSelectedMemberId(id);
+                const m = network[id];
+                setForm({ name: m.name, refCode: m.refCode || '', uid: m.uid || '', email: m.email || '', phone: m.phone || '' });
+                setFormCustodias(m.custodias ? [...m.custodias] : []);
+                setShowModal(true);
+            };
+
+            // Drag Events
+            const handleMouseEvents = {
+                onMouseDown: (e) => { if (!e.target.closest('button')) { setIsDragging(true); setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - dragStart.y }); } },
+                onMouseMove: (e) => { if (isDragging) setPanOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }); },
+                onMouseUp: () => setIsDragging(false),
+                onMouseLeave: () => setIsDragging(false)
+            };
+
+            if (!session) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4">
+                        <div className="bg-[#0b0e1a] border border-[#1c273e] p-8 rounded-3xl max-w-md w-full shadow-2xl">
+                            <div className="text-center mb-6">
+                                <span className="p-3 bg-indigo-600 rounded-2xl text-white font-extrabold text-2xl inline-block mb-3">BX</span>
+                                <h2 className="text-2xl font-black text-white">Rede Global Bitradex</h2>
+                                <p className="text-xs text-gray-400 mt-1">Conecte-se para gerir a sua rede SaaS</p>
+                            </div>
+                            <form onSubmit={async (e) => {
+                                e.preventDefault();
+                                setLoading(true);
+                                const { error } = authMode === 'login' 
+                                    ? await getSupabase().auth.signInWithPassword({ email, password })
+                                    : await getSupabase().auth.signUp({ email, password });
+                                setLoading(false);
+                                if (error) showNotification(error.message, true);
+                            }} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs text-gray-400 font-bold mb-1">E-mail</label>
+                                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-gray-200" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-gray-400 font-bold mb-1">Senha</label>
+                                    <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-gray-200" />
+                                </div>
+                                <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl">
+                                    {authMode === 'login' ? 'Entrar no Painel' : 'Criar Conta Grátis'}
+                                </button>
+                            </form>
+                            <div className="text-center text-xs mt-4">
+                                <button onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="text-indigo-400 hover:underline">
+                                    {authMode === 'login' ? 'Criar uma nova conta' : 'Já tenho conta'}
+                                </button>
+                            </div>
+                        </div>
+                        {toast.show && (
+                            <div className={`fixed top-4 right-4 ${toast.error ? 'bg-red-900' : 'bg-indigo-900'} text-white px-4 py-3 rounded-xl shadow-lg`}>
+                                {toast.message}
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+
+            if (loading && Object.keys(network).length === 0) {
+                return <div className="flex-1 flex items-center justify-center text-gray-400">A carregar banco de dados global...</div>;
+            }
+
+            const me = network[session.user.id];
+
+            return (
+                <div className="flex-1 flex flex-col">
+                    <header className="bg-[#0b0e1a] border-b border-[#1b253b] px-6 py-4 flex justify-between items-center sticky top-0 z-40">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2 bg-indigo-600 rounded-xl text-white font-extrabold text-lg">BX</span>
+                            <div>
+                                <h1 className="text-lg font-black text-white">Painel SaaS Pro</h1>
+                                <p className="text-xs text-gray-400">{session.user.email}</p>
+                            </div>
+                        </div>
+                        <button onClick={() => getSupabase().auth.signOut()} className="bg-slate-800 text-gray-300 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-700">Sair</button>
+                    </header>
+
+                    <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <div className="lg:col-span-1 flex flex-col gap-2">
+                            <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-3 rounded-xl font-bold text-sm flex gap-2 ${activeTab === 'dashboard' ? 'bg-indigo-600 text-white' : 'bg-[#0b0e1a] text-gray-400'}`}><Icons.Dashboard /> Geral</button>
+                            <button onClick={() => setActiveTab('network')} className={`px-4 py-3 rounded-xl font-bold text-sm flex gap-2 ${activeTab === 'network' ? 'bg-indigo-600 text-white' : 'bg-[#0b0e1a] text-gray-400'}`}><Icons.Network /> Árvore / CRM</button>
+                        </div>
+
+                        <div className="lg:col-span-3 space-y-6">
+                            
+                            {/* ALERTA FLUTUANTE DE SUCESSO/ERRO */}
+                            {toast.show && (
+                                <div className={`px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 ${toast.error ? 'bg-red-950 border border-red-800 text-red-200' : 'bg-indigo-950 border border-indigo-700 text-white'}`}>
+                                    <p className="text-sm font-semibold">{toast.error ? '⚠️ ERRO:' : '✅ SUCESSO:'} {toast.message}</p>
+                                </div>
+                            )}
+
+                            {activeTab === 'dashboard' && (
+                                <div className="space-y-6">
+                                    {me && !me.patriarca_id && (
+                                        <div className="bg-gradient-to-r from-[#111827] to-[#0f152e] border border-blue-900/50 p-6 rounded-2xl">
+                                            <h3 className="text-md font-bold text-blue-400 mb-2 flex items-center gap-2"><Icons.Link /> Conectar ao seu Patriarca</h3>
+                                            <p className="text-xs text-gray-400 mb-4">Insira o UID do seu líder para fazer parte da rede dele.</p>
+                                            <div className="flex gap-2">
+                                                <input type="text" value={uplineSearch} onChange={(e) => setUplineSearch(e.target.value)} placeholder="Ex: UID-XXXXXX" className="w-full max-w-xs bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-gray-200 uppercase font-mono" />
+                                                <button onClick={conectarAoPatriarca} className="bg-blue-600 text-white font-bold px-4 py-2 rounded-xl text-sm">Vincular</button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {me && me.patriarca_id && (
+                                        <div className="bg-[#0b0e1a] border border-emerald-900/30 p-4 rounded-2xl flex items-center gap-3">
+                                            <span className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><Icons.Check /></span>
+                                            <div>
+                                                <h3 className="text-xs font-bold text-emerald-400">Vinculado a uma Equipa Superior</h3>
+                                                <p className="text-[10px] text-gray-500">A sua rede está a subir volume corretamente.</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
+                                            <p className="text-xs text-gray-400 uppercase">Qualificação</p>
+                                            <p className="text-3xl font-black text-white mt-2">{stats[session.user.id]?.vipLabel || 'V0'}</p>
+                                        </div>
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
+                                            <p className="text-xs text-gray-400 uppercase">Vol. Equipa</p>
+                                            <p className="text-3xl font-black text-blue-400 mt-2">${(stats[session.user.id]?.teamVol || 0).toLocaleString()}</p>
+                                        </div>
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
+                                            <p className="text-xs text-gray-400 uppercase">Meu Aporte</p>
+                                            <p className="text-3xl font-black text-emerald-400 mt-2">${getPersonalSum(network[session.user.id]).toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'network' && (
+                                <div className="space-y-4">
+                                    <div className="flex justify-between bg-[#0b0e1a] p-4 border border-[#161f35] rounded-2xl">
+                                        <div className="bg-slate-950 p-1 rounded-xl flex border border-slate-800">
+                                            <button onClick={() => setViewMode('table')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'text-gray-400'}`}>Tabela CRM</button>
+                                            <button onClick={() => setViewMode('chart')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'chart' ? 'bg-indigo-600 text-white' : 'text-gray-400'}`}>Árvore Visual</button>
+                                        </div>
+                                        <button onClick={() => openAddModal(session.user.id)} className="bg-indigo-600 text-white text-xs px-3 py-2 rounded-xl font-bold">Novo Indicado Manual</button>
+                                    </div>
+
+                                    {viewMode === 'table' ? (
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl overflow-hidden shadow-xl overflow-x-auto">
+                                            <table className="w-full text-left">
+                                                <thead className="bg-[#12192c] text-[10px] text-gray-400 uppercase font-black">
+                                                    <tr>
+                                                        <th className="p-3">Membro</th>
+                                                        <th className="p-3">Aporte / Equipa</th>
+                                                        <th className="p-3">Contatos</th>
+                                                        <th className="p-3 text-right">Ações</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {Object.keys(network).filter(key => visibleMembers.has(key)).map(key => {
+                                                        const user = network[key];
+                                                        const userStats = stats[key];
+                                                        const isRoot = key === session.user.id;
+                                                        const isIndependent = user.userId !== session.user.id && !isRoot;
+                                                        const isDirect = network[session.user.id]?.children.includes(key);
+                                                        const indent = isRoot ? 0 : (isDirect ? 1 : 2);
+
+                                                        return (
+                                                            <tr key={key} className="border-b border-slate-800/40 hover:bg-slate-800/20">
+                                                                <td className="p-3 whitespace-nowrap" style={{ paddingLeft: `${indent * 20 + 12}px` }}>
+                                                                    <div className="text-xs font-bold text-gray-200">{user.name} {isIndependent && <span className="ml-1 text-[8px] bg-emerald-900/40 text-emerald-400 px-1 rounded">SaaS</span>}</div>
+                                                                    <div className="text-[9px] text-gray-500 font-mono">UID: {user.uid}</div>
+                                                                </td>
+                                                                <td className="p-3 text-xs font-bold">
+                                                                    <div className="text-emerald-400">${getPersonalSum(user).toLocaleString()} (P)</div>
+                                                                    <div className="text-blue-400">${userStats.teamVol.toLocaleString()} (E)</div>
+                                                                </td>
+                                                                <td className="p-3 text-[10px] text-gray-400">
+                                                                    <div>{user.email || '--'}</div>
+                                                                    <div>{user.phone || '--'}</div>
+                                                                </td>
+                                                                <td className="p-3 text-right">
+                                                                    <div className="flex justify-end gap-2 text-xs">
+                                                                        {!isIndependent && <button onClick={() => openEditModal(key)} className="text-gray-400 bg-slate-800 px-2 py-1 rounded">Editar</button>}
+                                                                        {!isIndependent && <button onClick={() => openAddModal(key)} className="text-indigo-400 bg-slate-800 px-2 py-1 rounded">+ Sub</button>}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl p-4 relative">
+                                            <div className={`relative bg-slate-950/40 rounded-xl border border-slate-900 min-h-[500px] overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`} {...handleMouseEvents}>
+                                                <div className="absolute inset-0 flex justify-center items-start pt-16 transition-transform" style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: 'top center' }}>
+                                                    <div className="inline-block pointer-events-auto">
+                                                        <TreeMemberCard memberId={session.user.id} network={network} stats={stats} onEdit={openEditModal} onAddSub={openAddModal} onRemove={()=>{}} currentUserId={session.user.id} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </main>
+
+                    {/* Modal de Cadastro/Edição Seguro */}
+                    {showModal && (
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+                            <div className="bg-[#0b0e1a] border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
+                                <h3 className="font-bold text-lg text-white border-b border-slate-800 pb-3">
+                                    {modalMode === 'add' ? 'Adicionar Indicado' : `Editar ${form.name}`}
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-2">
+                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Nome Completo *</label>
+                                        <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">E-mail</label>
+                                        <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Telemóvel</label>
+                                        <input type="text" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                                    </div>
+                                    
+                                    <div className="col-span-2 bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 mt-2">
+                                        <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Custódias / Aportes</h4>
+                                        {formCustodias.map((cust, idx) => (
+                                            <div key={cust.id} className="bg-slate-950 p-3 rounded-lg border border-slate-800 flex gap-2">
+                                                <input type="text" value={cust.label} onChange={(e) => { const u = [...formCustodias]; u[idx].label = e.target.value; setFormCustodias(u); }} className="w-1/2 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white" placeholder="Nome Banca"/>
+                                                <input type="number" value={cust.value} onChange={(e) => { const u = [...formCustodias]; u[idx].value = parseFloat(e.target.value)||0; setFormCustodias(u); }} className="w-1/4 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white" placeholder="Valor"/>
+                                                <button onClick={() => setFormCustodias(formCustodias.filter(c => c.id !== cust.id))} className="w-1/4 text-red-500 text-xs font-bold">X</button>
+                                            </div>
+                                        ))}
+                                        <button onClick={() => setFormCustodias([...formCustodias, { id: 'c_' + Date.now(), label: 'Nova Banca', value: 100, rate: 15 }])} className="w-full border border-dashed border-indigo-500/40 text-indigo-400 py-2 rounded-xl text-xs font-bold">+ Adicionar Valor</button>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
+                                    <button onClick={() => setShowModal(false)} className="bg-slate-800 text-white px-5 py-2 rounded-xl text-xs font-bold">Cancelar</button>
+                                    <button onClick={handleSaveMember} className="bg-indigo-600 text-white px-5 py-2 rounded-xl shadow-lg text-xs font-bold">Salvar e Sincronizar</button>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
