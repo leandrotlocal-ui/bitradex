@@ -29,7 +29,35 @@
         const { useState, useMemo, useEffect } = React;
 
         // =========================================================================
-        // CREDENCIAIS SUPABASE (Mantenha as suas originais)
+        // PREVENÇÃO DE TELA PRETA (Error Boundary)
+        // =========================================================================
+        class ErrorBoundary extends React.Component {
+            constructor(props) { super(props); this.state = { hasError: false, error: null, info: null }; }
+            static getDerivedStateFromError(error) { return { hasError: true, error }; }
+            componentDidCatch(error, info) { console.error("Erro Crítico Capturado:", error, info); this.setState({ info }); }
+            render() {
+                if (this.state.hasError) {
+                    return (
+                        <div className="min-h-screen flex items-center justify-center bg-[#03050a] p-6">
+                            <div className="bg-red-950 border border-red-800 p-8 rounded-3xl max-w-2xl w-full shadow-2xl">
+                                <h1 className="text-2xl font-black text-white mb-2 flex items-center gap-2">⚠️ Ocorreu um Erro Crítico</h1>
+                                <p className="text-red-200 text-sm mb-6">O aplicativo foi interrompido para evitar danos aos dados. Tire print deste erro e envie ao suporte técnico:</p>
+                                <pre className="bg-black/60 p-4 rounded-xl text-xs overflow-auto font-mono text-red-400 border border-red-900/50 mb-6">
+                                    {this.state.error?.toString()}
+                                    <br/><br/>
+                                    {this.state.info?.componentStack}
+                                </pre>
+                                <button onClick={() => window.location.reload()} className="bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-red-500 transition-all">Recarregar Sistema</button>
+                            </div>
+                        </div>
+                    );
+                }
+                return this.props.children;
+            }
+        }
+
+        // =========================================================================
+        // CREDENCIAIS SUPABASE (Não altere)
         // =========================================================================
         if (!window.SUPABASE_URL) window.SUPABASE_URL = "https://ntqiunpljjehuiqdjetc.supabase.co";
         if (!window.SUPABASE_ANON_KEY) window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50cWl1bnBsamplaHVpcWRqZXRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjY0NDAsImV4cCI6MjA5NzgwMjQ0MH0.N39lOduuu-pLysAWP6t0PSe6HFdmQELYXsXJ7IwDwpY";
@@ -87,21 +115,21 @@
 
             return (
                 <div className="flex flex-col items-center">
-                    <div className={`p-4 rounded-2xl border text-left min-w-[220px] max-w-[260px] shadow-2xl relative transition-all duration-300 z-20
+                    <div className={`p-4 rounded-2xl border text-left min-w-[240px] max-w-[280px] shadow-2xl relative transition-all duration-300 z-20
                         ${isRootOfSession ? 'bg-gradient-to-b from-[#0a182d] to-[#040914] border-indigo-500/80 shadow-indigo-950/40' 
                             : isIndependentUser ? 'bg-gradient-to-b from-[#1b241c] to-[#0d140e] border-emerald-600/50 shadow-emerald-950/20'
                             : 'bg-[#0e1222] border-slate-800 shadow-black/40'}`}>
                         
                         {hasChildren && (
-                            <button onClick={(e) => { e.stopPropagation(); setIsCollapsed(!isCollapsed); }} className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-[10px] text-gray-300 hover:bg-indigo-600 z-30">{isCollapsed ? '+' : '-'}</button>
+                            <button onClick={(e) => { e.stopPropagation(); setIsCollapsed(!isCollapsed); }} className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-[10px] text-gray-300 hover:bg-indigo-600 z-30 font-black">{isCollapsed ? '+' : '-'}</button>
                         )}
 
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-2 gap-2">
                             <span className="text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase bg-indigo-500/20 text-indigo-400">{memberStats.vipLabel}</span>
-                            <div className="flex gap-1">
-                                {!isIndependentUser && <button onClick={() => onEdit(memberId)} className="text-[10px] bg-slate-800/80 p-1 rounded hover:text-white">✏️</button>}
-                                {!isIndependentUser && <button onClick={() => onAddSub(memberId)} className="text-[10px] bg-indigo-950/40 p-1 rounded text-indigo-400">➕</button>}
-                                {!isRootOfSession && !isIndependentUser && <button onClick={() => onRemove(memberId)} className="text-[10px] bg-red-950/40 p-1 rounded text-red-400">🗑️</button>}
+                            <div className="flex gap-1 shrink-0">
+                                {!isIndependentUser && <button onClick={() => onEdit(memberId)} className="text-[10px] bg-slate-800/80 p-1.5 rounded hover:bg-slate-700 hover:text-white transition-colors" title="Editar">✏️</button>}
+                                {!isIndependentUser && <button onClick={() => onAddSub(memberId)} className="text-[10px] bg-indigo-950/40 p-1.5 rounded text-indigo-400 hover:bg-indigo-900 transition-colors" title="Novo Sub-indicado">➕</button>}
+                                {!isRootOfSession && !isIndependentUser && <button onClick={() => onRemove(memberId)} className="text-[10px] bg-red-950/40 p-1.5 rounded text-red-400 hover:bg-red-900 transition-colors" title="Excluir Ramificação">🗑️</button>}
                                 {isIndependentUser && <span className="text-[8px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-black uppercase tracking-widest">SaaS</span>}
                             </div>
                         </div>
@@ -109,11 +137,20 @@
                         <h4 className="text-xs font-bold text-gray-100 truncate mt-1">{member.name}</h4>
                         <p className="text-[9px] text-slate-500 font-mono mt-0.5">UID: {member.uid}</p>
                         
-                        {}
-                        <div className="mt-2 pt-2 border-t border-slate-800/60 space-y-1 text-[9px] text-slate-400 bg-slate-950/50 p-2 rounded-lg w-full">
-                            <div className="flex justify-between"><span>Diretos (N1):</span><span className="font-bold text-gray-200">{memberStats.level1}</span></div>
-                            <div className="flex justify-between"><span>Indiretos (N2):</span><span className="font-bold text-blue-400">{memberStats.level2}</span></div>
-                            <div className="flex justify-between"><span>Outros (N3+):</span><span className="font-bold text-indigo-300">{memberStats.level3Plus}</span></div>
+                        {/* Indicadores Visuais de Níveis */}
+                        <div className="mt-2.5 pt-2 border-t border-slate-800/60 space-y-1 text-[9px] text-slate-400 bg-slate-950/50 p-2 rounded-lg w-full">
+                            <div className="flex justify-between items-center">
+                                <span title="Indicações Diretas">Diretos (N1):</span>
+                                <span className="font-bold text-gray-200 bg-slate-800 px-1.5 rounded">{memberStats.level1}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span title="Indicações Indiretas">Indiretos (N2):</span>
+                                <span className="font-bold text-blue-400 bg-slate-800 px-1.5 rounded">{memberStats.level2}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span title="Restante da Profundidade">Outros (N3+):</span>
+                                <span className="font-bold text-indigo-400 bg-slate-800 px-1.5 rounded">{memberStats.level3Plus}</span>
+                            </div>
                         </div>
 
                         <div className="mt-3 pt-2.5 border-t border-slate-850 grid grid-cols-2 gap-2 text-[10px]">
@@ -160,7 +197,9 @@
             const [showModal, setShowModal] = useState(false);
             const [modalMode, setModalMode] = useState('add');
             const [selectedMemberId, setSelectedMemberId] = useState('');
+            const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', action: null });
             
+            // Custódias Múltiplas suportam Rate (Taxa)
             const [form, setForm] = useState({ name: '', refCode: '', uid: '', email: '', phone: '' });
             const [formCustodias, setFormCustodias] = useState([]);
 
@@ -191,7 +230,7 @@
             }, []);
 
             const fetchNetwork = async () => {
-                if (!session) return;
+                if (!session || !session.user) return;
                 setLoading(true);
                 const client = getSupabase();
                 if (!client) return;
@@ -200,7 +239,7 @@
                     const { data, error } = await client.from('simulador_rede').select('*');
                     
                     if (error) {
-                        showNotification("Erro Crítico ao Ler Rede: " + error.message, true);
+                        showNotification("Erro ao Ler Rede: " + error.message, true);
                         setLoading(false);
                         return;
                     }
@@ -211,19 +250,19 @@
                             networkObj[item.id] = {
                                 id: item.id,
                                 userId: item.user_id,
-                                name: item.name,
-                                uid: item.uid,
-                                refCode: item.ref_code,
-                                email: item.email,
-                                phone: item.phone,
+                                name: item.name || 'Sem Nome',
+                                uid: item.uid || '',
+                                refCode: item.ref_code || '',
+                                email: item.email || '',
+                                phone: item.phone || '',
                                 patriarca_id: item.patriarca_id,
                                 custodias: Array.isArray(item.custodias) ? item.custodias : [],
-                                children: item.children || []
+                                children: Array.isArray(item.children) ? item.children : []
                             };
                         });
                     }
 
-                    // Se a conta acabou de ser criada, cria o nó inicial na base de dados
+                    // Verifica se o nó raiz do usuário existe
                     const myId = session.user.id;
                     if (!networkObj[myId]) {
                         const baseNode = {
@@ -244,7 +283,9 @@
                         if (upsertErr) {
                             showNotification("Erro ao criar perfil no banco: " + upsertErr.message, true);
                         } else {
-                            networkObj[myId] = { ...baseNode, userId: myId };
+                            networkObj[myId] = {
+                                id: baseNode.id, userId: baseNode.user_id, name: baseNode.name, uid: baseNode.uid, refCode: baseNode.ref_code, email: baseNode.email, phone: baseNode.phone, patriarca_id: baseNode.patriarca_id, custodias: baseNode.custodias, children: baseNode.children
+                            };
                         }
                     }
 
@@ -256,7 +297,6 @@
                 }
             };
 
-            // Atualiza a rede assim que loga
             useEffect(() => { if (session) fetchNetwork(); }, [session]);
 
             const handleSaveMember = async () => {
@@ -265,7 +305,7 @@
                 const client = getSupabase();
                 let updatedNetwork = { ...network };
 
-                // Geração garantida de UID único caso o usuário deixe em branco
+                // Geração garantida de UID único caso em branco
                 const finalUid = form.uid?.trim() || `UID-${Date.now().toString().slice(-5)}${Math.random().toString(36).substring(2, 4).toUpperCase()}`;
                 const finalRef = form.refCode?.trim() || `REF-${Date.now().toString().slice(-4)}${Math.random().toString(36).substring(2, 4).toUpperCase()}`;
                 const personalSum = formCustodias.reduce((s, c) => s + (parseFloat(c.value) || 0), 0);
@@ -287,141 +327,133 @@
                     };
                     
                     try {
-                        // 1. Tenta inserir no Supabase PRIMEIRO
                         const { error: insertErr } = await client.from('simulador_rede').insert([newNode]);
-                        if (insertErr) {
-                            // Se falhar (ex: UID duplicado no banco inteiro), PARA TUDO e avisa
-                            showNotification("Erro ao salvar no banco: " + insertErr.message, true);
-                            return; 
-                        }
+                        if (insertErr) return showNotification("Erro ao salvar no banco: " + insertErr.message, true);
 
-                        // 2. Tenta atualizar o pai no Supabase
-                        const newChildrenList = [...(updatedNetwork[selectedMemberId].children || []), newId];
+                        const parentNode = updatedNetwork[selectedMemberId];
+                        const newChildrenList = [...(parentNode.children || []), newId];
                         const { error: parentUpdateErr } = await client.from('simulador_rede')
-                            .update({ children: newChildrenList })
-                            .eq('id', selectedMemberId);
+                            .update({ children: newChildrenList }).eq('id', selectedMemberId);
                         
-                        if (parentUpdateErr) {
-                            showNotification("Erro ao vincular membro: " + parentUpdateErr.message, true);
-                            return;
-                        }
+                        if (parentUpdateErr) return showNotification("Erro ao vincular membro: " + parentUpdateErr.message, true);
 
-                        // 3. Tudo deu certo na nuvem! Atualiza a tela.
                         showNotification("Membro registado com sucesso!");
                         fetchNetwork(); 
                         setShowModal(false);
-                    } catch (e) { 
-                        showNotification("Erro crítico de conexão: " + e.message, true); 
-                    }
+                    } catch (e) { showNotification("Erro crítico: " + e.message, true); }
                 } else {
-                    // MODO EDIÇÃO
+                    // EDIÇÃO
                     try {
                         const { error: updateErr } = await client.from('simulador_rede').update({ 
-                            name: form.name.trim(), 
-                            uid: finalUid, 
-                            ref_code: finalRef, 
-                            email: form.email?.trim() || null, 
-                            phone: form.phone?.trim() || null, 
-                            custodias: formCustodias,
-                            personal: personalSum
+                            name: form.name.trim(), uid: finalUid, ref_code: finalRef, email: form.email?.trim() || null, phone: form.phone?.trim() || null, custodias: formCustodias, personal: personalSum
                         }).eq('id', selectedMemberId);
                         
-                        if (updateErr) {
-                            // Se der erro ao editar, exibe alerta vermelho e NÃO fecha o modal
-                            showNotification("Erro ao atualizar banco: " + updateErr.message, true);
-                            return;
-                        }
+                        if (updateErr) return showNotification("Erro ao atualizar banco: " + updateErr.message, true);
 
                         showNotification("Dados atualizados com sucesso!");
                         fetchNetwork();
                         setShowModal(false);
-                    } catch (e) { 
-                        showNotification("Erro crítico de conexão: " + e.message, true); 
-                    }
+                    } catch (e) { showNotification("Erro crítico: " + e.message, true); }
                 }
+            };
+
+            const handleRemoveMember = (id) => {
+                const client = getSupabase();
+                const member = network[id];
+                if (!member) return;
+
+                setConfirmModal({
+                    show: true,
+                    title: "Excluir Membro e Ramificação",
+                    message: `Tem certeza que deseja excluir "${member.name}"? Isso excluirá permanentemente todos os indicados abaixo dele na base de dados.`,
+                    action: async () => {
+                        let updatedNetwork = { ...network };
+                        let parentId = Object.keys(updatedNetwork).find(k => updatedNetwork[k].children.includes(id));
+                        
+                        const deletedIds = [];
+                        const cleanNodes = (nodeId) => {
+                            const node = updatedNetwork[nodeId];
+                            if (node) {
+                                (node.children || []).forEach(cleanNodes);
+                                deletedIds.push(nodeId);
+                            }
+                        };
+                        cleanNodes(id);
+
+                        try {
+                            if (parentId) {
+                                const newChildren = updatedNetwork[parentId].children.filter(cid => cid !== id);
+                                await client.from('simulador_rede').update({ children: newChildren }).eq('id', parentId);
+                            }
+                            const { error } = await client.from('simulador_rede').delete().in('id', deletedIds);
+                            if (error) throw error;
+                            
+                            showNotification("Ramificação removida com sucesso.");
+                            fetchNetwork();
+                        } catch (e) {
+                            showNotification("Erro ao remover: " + e.message, true);
+                        }
+                    }
+                });
             };
 
             const conectarAoPatriarca = async () => {
                 const uidLimpo = uplineSearch.trim().toUpperCase();
-                if (!uidLimpo) return showNotification("Introduza um UID.", true);
+                if (!uidLimpo) return showNotification("Introduza um UID válido.", true);
                 
                 setLoading(true);
                 const client = getSupabase();
                 
-                const { data, error } = await client.rpc('conectar_rede_patriarca', {
-                    novo_membro_id: session.user.id,
-                    termo_busca_patriarca: uidLimpo
-                });
+                try {
+                    const { data, error } = await client.rpc('conectar_rede_patriarca', {
+                        novo_membro_id: session.user.id,
+                        termo_busca_patriarca: uidLimpo
+                    });
 
-                setLoading(false);
-                if (error) {
-                    showNotification("Erro de Banco de Dados: " + error.message, true);
-                } else if (data && data.sucesso) {
-                    showNotification("🚀 " + data.mensagem);
-                    fetchNetwork();
-                } else {
-                    showNotification("⚠️ " + (data?.mensagem || "Líder não localizado."), true);
+                    if (error) {
+                        showNotification("Erro de Servidor RPC: " + error.message, true);
+                    } else if (data && data.sucesso) {
+                        showNotification("🚀 " + data.mensagem);
+                        fetchNetwork();
+                    } else {
+                        showNotification("⚠️ " + (data?.mensagem || "Líder não localizado."), true);
+                    }
+                } catch(e) {
+                    showNotification("Erro de conexão ao banco de dados.", true);
+                } finally {
+                    setLoading(false);
                 }
             };
 
             const visibleMembers = useMemo(() => {
                 if (!session) return new Set();
                 const visible = new Set();
-                const traverseDown = (id) => {
-                    if (!id || !network[id]) return;
+                const traverseDown = (id, visited = new Set()) => {
+                    if (!id || !network[id] || visited.has(id)) return;
+                    visited.add(id);
                     visible.add(id);
-                    network[id].children.forEach(cid => traverseDown(cid));
+                    (network[id].children || []).forEach(cid => traverseDown(cid, visited));
                 };
                 traverseDown(session.user.id);
                 return visible;
             }, [network, session]);
 
-            const earnings = useMemo(() => {
-                if (!session || Object.keys(network).length === 0 || !stats[session.user.id]) return { personal: 0, n1: 0, n2: 0, diff: 0, total: 0 };
-                
-                const myId = session.user.id;
-                const myRate = VIP_RULES.find(r => r.level === stats[myId]?.level)?.rate || 0;
-                let n1 = 0, n2 = 0, diff = 0;
-
-                const personal = getMonthlyYield(network[myId]);
-
-                const traverseEarnings = (nodeId, depth) => {
-                    const node = network[nodeId];
-                    if (!node) return;
-                    
-                    if (nodeId !== myId) {
-                        const nodeYield = getMonthlyYield(node);
-                        
-                        // 10% do rendimento de diretos (N1) e 5% de indiretos (N2)
-                        if (depth === 1) n1 += nodeYield * 0.10;
-                        if (depth === 2) n2 += nodeYield * 0.05;
-
-                        // Diferencial VIP: Minha percentagem menos a percentagem do membro da equipa
-                        const nodeVipRate = VIP_RULES.find(r => r.level === stats[nodeId]?.level)?.rate || 0;
-                        if (myRate > nodeVipRate) {
-                            diff += nodeYield * (myRate - nodeVipRate);
-                        }
-                    }
-                    node.children.forEach(cid => traverseEarnings(cid, depth + 1));
-                };
-
-                traverseEarnings(myId, 0);
-                return { personal, n1, n2, diff, total: personal + n1 + n2 + diff };
-            }, [network, session, stats]);
-
             const stats = useMemo(() => {
                 if (!session || Object.keys(network).length === 0) return {};
                 const results = {};
 
-                const calculateNode = (id) => {
+                const calculateNode = (id, visited = new Set()) => {
+                    if (visited.has(id)) return { teamVol: 0, directsActive: 0, level: 'Membro', vipLabel: 'V0 (Básico)', level1: 0, level2: 0, level3Plus: 0 };
+                    visited.add(id);
+
                     const node = network[id];
                     if (!node) return { teamVol: 0, directsActive: 0, level: 'Membro', vipLabel: 'V0 (Básico)', level1: 0, level2: 0, level3Plus: 0 };
 
                     let teamVol = 0;
                     let directsActive = 0;
 
-                    node.children.forEach(cid => {
-                        const childStats = calculateNode(cid);
+                    (node.children || []).forEach(cid => {
+                        const childStats = calculateNode(cid, new Set(visited));
                         const child = network[cid];
                         if (child) {
                             const childPersonal = getPersonalSum(child);
@@ -441,15 +473,19 @@
                         }
                     }
 
+                    // Contador de níveis exatos para Dashboard N1, N2, N3+
                     let level1 = 0, level2 = 0, level3Plus = 0;
-                    const traverseDepths = (nodeId, depth) => {
+                    const traverseDepths = (nodeId, depth, depthVisited = new Set()) => {
+                        if (depthVisited.has(nodeId)) return;
+                        depthVisited.add(nodeId);
                         const targetNode = network[nodeId];
-                        if (!targetNode) return;
+                        if (!targetNode || !targetNode.children) return;
+                        
                         targetNode.children.forEach(cid => {
                             if (depth === 1) level1++;
                             else if (depth === 2) level2++;
                             else level3Plus++;
-                            traverseDepths(cid, depth + 1);
+                            traverseDepths(cid, depth + 1, depthVisited);
                         });
                     };
                     traverseDepths(id, 1);
@@ -462,7 +498,43 @@
                 return results;
             }, [network, session]);
 
-            // Handlers Modal
+            // Cálculo Estimado de Lucros Global Mensal
+            const earnings = useMemo(() => {
+                if (!session || Object.keys(network).length === 0 || !stats[session.user.id]) return { personal: 0, n1: 0, n2: 0, diff: 0, total: 0 };
+                
+                const myId = session.user.id;
+                const myRate = VIP_RULES.find(r => r.level === stats[myId]?.level)?.rate || 0;
+                let n1 = 0, n2 = 0, diff = 0;
+
+                const personal = getMonthlyYield(network[myId]);
+
+                const traverseEarnings = (nodeId, depth, visited = new Set()) => {
+                    if (visited.has(nodeId)) return;
+                    visited.add(nodeId);
+
+                    const node = network[nodeId];
+                    if (!node) return;
+                    
+                    if (nodeId !== myId) {
+                        const nodeYield = getMonthlyYield(node);
+                        
+                        // 10% diretos, 5% indiretos (Mensal)
+                        if (depth === 1) n1 += nodeYield * 0.10;
+                        if (depth === 2) n2 += nodeYield * 0.05;
+
+                        // Diferencial VIP (Mensal em cima da produção das equipes)
+                        const nodeVipRate = VIP_RULES.find(r => r.level === stats[nodeId]?.level)?.rate || 0;
+                        if (myRate > nodeVipRate) {
+                            diff += nodeYield * (myRate - nodeVipRate);
+                        }
+                    }
+                    (node.children || []).forEach(cid => traverseEarnings(cid, depth + 1, visited));
+                };
+
+                traverseEarnings(myId, 0);
+                return { personal, n1, n2, diff, total: personal + n1 + n2 + diff };
+            }, [network, session, stats]);
+
             const openAddModal = (parentId) => {
                 setModalMode('add'); setSelectedMemberId(parentId);
                 setForm({ name: '', refCode: '', uid: '', email: '', phone: '' });
@@ -471,17 +543,19 @@
             };
 
             const openEditModal = (id) => {
-                if (network[id].userId !== session.user.id) return showNotification("Não pode editar um parceiro independente.", true);
+                const member = network[id];
+                if (member.userId && member.userId !== session.user.id && id !== session.user.id) {
+                    return showNotification("Não pode editar as custódias de um parceiro independente ligado via SaaS.", true);
+                }
                 setModalMode('edit'); setSelectedMemberId(id);
-                const m = network[id];
-                setForm({ name: m.name, refCode: m.refCode || '', uid: m.uid || '', email: m.email || '', phone: m.phone || '' });
-                setFormCustodias(m.custodias ? [...m.custodias] : []);
+                setForm({ name: member.name, refCode: member.refCode || '', uid: member.uid || '', email: member.email || '', phone: member.phone || '' });
+                setFormCustodias(member.custodias ? [...member.custodias] : []);
                 setShowModal(true);
             };
 
             // Drag Events
             const handleMouseEvents = {
-                onMouseDown: (e) => { if (!e.target.closest('button')) { setIsDragging(true); setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - dragStart.y }); } },
+                onMouseDown: (e) => { if (!e.target.closest('button')) { setIsDragging(true); setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y }); } },
                 onMouseMove: (e) => { if (isDragging) setPanOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }); },
                 onMouseUp: () => setIsDragging(false),
                 onMouseLeave: () => setIsDragging(false)
@@ -489,12 +563,13 @@
 
             if (!session) {
                 return (
-                    <div className="min-h-screen flex items-center justify-center p-4">
-                        <div className="bg-[#0b0e1a] border border-[#1c273e] p-8 rounded-3xl max-w-md w-full shadow-2xl">
+                    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/20 to-black pointer-events-none"></div>
+                        <div className="bg-[#0b0e1a] border border-[#1c273e] p-8 rounded-3xl max-w-md w-full shadow-2xl relative z-10">
                             <div className="text-center mb-6">
-                                <span className="p-3 bg-indigo-600 rounded-2xl text-white font-extrabold text-2xl inline-block mb-3">BX</span>
-                                <h2 className="text-2xl font-black text-white">Rede Global Bitradex</h2>
-                                <p className="text-xs text-gray-400 mt-1">Conecte-se para gerir a sua rede SaaS</p>
+                                <span className="p-3 bg-gradient-to-tr from-indigo-600 to-blue-500 rounded-2xl text-white font-extrabold text-2xl inline-block mb-3 shadow-lg">BX</span>
+                                <h2 className="text-2xl font-black text-white tracking-tight">Rede Global Bitradex</h2>
+                                <p className="text-xs text-gray-400 mt-2 font-medium">Autenticação segura via Supabase</p>
                             </div>
                             <form onSubmit={async (e) => {
                                 e.preventDefault();
@@ -506,155 +581,171 @@
                                 if (error) showNotification(error.message, true);
                             }} className="space-y-4">
                                 <div>
-                                    <label className="block text-xs text-gray-400 font-bold mb-1">E-mail</label>
-                                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-gray-200" />
+                                    <label className="block text-[10px] text-gray-400 uppercase font-black tracking-wider mb-1">E-mail</label>
+                                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-gray-200 focus:border-indigo-500 outline-none transition-all" placeholder="exemplo@email.com"/>
                                 </div>
                                 <div>
-                                    <label className="block text-xs text-gray-400 font-bold mb-1">Senha</label>
-                                    <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-gray-200" />
+                                    <label className="block text-[10px] text-gray-400 uppercase font-black tracking-wider mb-1">Senha Segura</label>
+                                    <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-gray-200 focus:border-indigo-500 outline-none transition-all" placeholder="••••••••"/>
                                 </div>
-                                <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl">
-                                    {authMode === 'login' ? 'Entrar no Painel' : 'Criar Conta Grátis'}
+                                <button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-xl shadow-lg shadow-indigo-900/40 transition-all disabled:opacity-50">
+                                    {loading ? 'Processando...' : (authMode === 'login' ? 'Acessar Painel' : 'Criar Conta Gratuita')}
                                 </button>
                             </form>
-                            <div className="text-center text-xs mt-4">
-                                <button onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="text-indigo-400 hover:underline">
-                                    {authMode === 'login' ? 'Criar uma nova conta' : 'Já tenho conta'}
+                            <div className="text-center text-xs mt-5">
+                                <button onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="text-indigo-400 font-bold hover:text-indigo-300 transition-colors">
+                                    {authMode === 'login' ? 'Não tem conta? Registe-se' : 'Já possuo conta (Login)'}
                                 </button>
                             </div>
                         </div>
                         {toast.show && (
-                            <div className={`fixed top-4 right-4 ${toast.error ? 'bg-red-900' : 'bg-indigo-900'} text-white px-4 py-3 rounded-xl shadow-lg`}>
-                                {toast.message}
+                            <div className={`fixed top-4 right-4 z-50 ${toast.error ? 'bg-red-900 border-red-700' : 'bg-indigo-900 border-indigo-700'} border text-white px-5 py-3 rounded-xl shadow-2xl animate-bounce`}>
+                                <p className="text-sm font-bold">{toast.error ? 'Erro:' : 'Aviso:'} {toast.message}</p>
                             </div>
                         )}
                     </div>
                 );
             }
 
+            // Exibir loading enquanto busca dados, protegendo contra crashs por nodes inexistentes
             if (loading && Object.keys(network).length === 0) {
-                return <div className="flex-1 flex items-center justify-center text-gray-400">A carregar banco de dados global...</div>;
+                return (
+                    <div className="flex-1 flex flex-col items-center justify-center text-indigo-400 gap-4">
+                        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-sm font-bold tracking-widest uppercase">Sincronizando Rede Global...</span>
+                    </div>
+                );
             }
 
             const me = network[session.user.id];
 
             return (
                 <div className="flex-1 flex flex-col">
-                    <header className="bg-[#0b0e1a] border-b border-[#1b253b] px-6 py-4 flex justify-between items-center sticky top-0 z-40">
+                    <header className="bg-[#0b0e1a] border-b border-[#1b253b] px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-40 shadow-sm">
                         <div className="flex items-center gap-3">
-                            <span className="p-2 bg-indigo-600 rounded-xl text-white font-extrabold text-lg">BX</span>
+                            <span className="p-2 bg-gradient-to-tr from-indigo-600 to-blue-500 rounded-xl text-white font-extrabold text-lg shadow-lg">BX</span>
                             <div>
-                                <h1 className="text-lg font-black text-white">Painel SaaS Pro</h1>
-                                <p className="text-xs text-gray-400">{session.user.email}</p>
+                                <h1 className="text-lg font-black text-white tracking-tight">Painel SaaS Pro</h1>
+                                <p className="text-[10px] font-mono text-indigo-400">{session.user.email}</p>
                             </div>
                         </div>
-                        <button onClick={() => getSupabase().auth.signOut()} className="bg-slate-800 text-gray-300 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-700">Sair</button>
+                        <button onClick={() => getSupabase().auth.signOut()} className="bg-slate-800 text-gray-300 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-700 transition-colors border border-slate-700">Finalizar Sessão</button>
                     </header>
 
                     <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        <div className="lg:col-span-1 flex flex-col gap-2">
-                            <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-3 rounded-xl font-bold text-sm flex gap-2 ${activeTab === 'dashboard' ? 'bg-indigo-600 text-white' : 'bg-[#0b0e1a] text-gray-400'}`}><Icons.Dashboard /> Geral</button>
-                            <button onClick={() => setActiveTab('network')} className={`px-4 py-3 rounded-xl font-bold text-sm flex gap-2 ${activeTab === 'network' ? 'bg-indigo-600 text-white' : 'bg-[#0b0e1a] text-gray-400'}`}><Icons.Network /> Árvore / CRM</button>
+                        <div className="lg:col-span-1 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+                            <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all whitespace-nowrap ${activeTab === 'dashboard' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-[#0b0e1a] text-gray-400 border border-slate-800 hover:text-white'}`}><Icons.Dashboard /> Dashboard Geral</button>
+                            <button onClick={() => setActiveTab('network')} className={`px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-3 transition-all whitespace-nowrap ${activeTab === 'network' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-[#0b0e1a] text-gray-400 border border-slate-800 hover:text-white'}`}><Icons.Network /> CRM / Árvore</button>
                         </div>
 
                         <div className="lg:col-span-3 space-y-6">
-                            
-                            {/* ALERTA FLUTUANTE DE SUCESSO/ERRO */}
                             {toast.show && (
-                                <div className={`px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 ${toast.error ? 'bg-red-950 border border-red-800 text-red-200' : 'bg-indigo-950 border border-indigo-700 text-white'}`}>
-                                    <p className="text-sm font-semibold">{toast.error ? '⚠️ ERRO:' : '✅ SUCESSO:'} {toast.message}</p>
+                                <div className={`px-5 py-4 rounded-xl shadow-lg flex items-center gap-3 border ${toast.error ? 'bg-red-950/80 border-red-800 text-red-200' : 'bg-indigo-950/80 border-indigo-700 text-white'}`}>
+                                    <p className="text-sm font-semibold">{toast.error ? '⚠️ Falha:' : '✅ Sucesso:'} {toast.message}</p>
                                 </div>
                             )}
 
                             {activeTab === 'dashboard' && (
                                 <div className="space-y-6">
+                                    {/* Módulo de Ligação Patriarca */}
                                     {me && !me.patriarca_id && (
-                                        <div className="bg-gradient-to-r from-[#111827] to-[#0f152e] border border-blue-900/50 p-6 rounded-2xl">
-                                            <h3 className="text-md font-bold text-blue-400 mb-2 flex items-center gap-2"><Icons.Link /> Conectar ao seu Patriarca</h3>
-                                            <p className="text-xs text-gray-400 mb-4">Insira o UID do seu líder para fazer parte da rede dele.</p>
+                                        <div className="bg-gradient-to-r from-[#111827] to-[#0f152e] border border-blue-900/50 p-6 rounded-2xl shadow-xl">
+                                            <h3 className="text-sm font-black text-blue-400 mb-2 flex items-center gap-2 uppercase tracking-widest"><Icons.Link /> Ligar-se a um Upline</h3>
+                                            <p className="text-xs text-gray-400 mb-4">Se foi convidado por um líder, insira o UID dele para unificar o volume das redes na nuvem.</p>
                                             <div className="flex gap-2">
-                                                <input type="text" value={uplineSearch} onChange={(e) => setUplineSearch(e.target.value)} placeholder="Ex: UID-XXXXXX" className="w-full max-w-xs bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-gray-200 uppercase font-mono" />
-                                                <button onClick={conectarAoPatriarca} className="bg-blue-600 text-white font-bold px-4 py-2 rounded-xl text-sm">Vincular</button>
+                                                <input type="text" value={uplineSearch} onChange={(e) => setUplineSearch(e.target.value)} placeholder="Ex: UID-XXXXXX" className="w-full max-w-xs bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-gray-200 uppercase font-mono focus:border-blue-500 outline-none" />
+                                                <button onClick={conectarAoPatriarca} className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-2 rounded-xl text-sm transition-colors shadow-lg">Vincular</button>
                                             </div>
                                         </div>
                                     )}
 
                                     {me && me.patriarca_id && (
-                                        <div className="bg-[#0b0e1a] border border-emerald-900/30 p-4 rounded-2xl flex items-center gap-3">
-                                            <span className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><Icons.Check /></span>
+                                        <div className="bg-[#0b0e1a] border border-emerald-900/40 p-4 rounded-2xl flex items-center gap-4 shadow-lg">
+                                            <span className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 border border-emerald-500/30"><Icons.Check /></span>
                                             <div>
-                                                <h3 className="text-xs font-bold text-emerald-400">Vinculado a uma Equipa Superior</h3>
-                                                <p className="text-[10px] text-gray-500">A sua rede está a subir volume corretamente.</p>
+                                                <h3 className="text-xs font-black text-emerald-400 uppercase tracking-widest">Rede Interligada e Protegida</h3>
+                                                <p className="text-[10px] text-gray-400 mt-0.5">Está validado. Todo o volume flui corretamente e a sua estrutura está segura.</p>
                                             </div>
                                         </div>
                                     )}
 
+                                    {/* KPIs Rápidos */}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
-                                            <p className="text-xs text-gray-400 uppercase">Qualificação</p>
-                                            <p className="text-3xl font-black text-white mt-2">{stats[session.user.id]?.vipLabel || 'V0'}</p>
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl shadow-lg relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 p-3 opacity-10 text-white"><Icons.Dashboard /></div>
+                                            <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Nível Qualificado</p>
+                                            <p className="text-3xl font-black text-white mt-2 flex items-baseline gap-2">
+                                                {stats[session.user.id]?.vipLabel || 'V0'}
+                                                <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-bold align-middle">
+                                                    +{((VIP_RULES.find(r => r.level === stats[session.user.id]?.level)?.rate || 0) * 100).toFixed(0)}% Diferencial
+                                                </span>
+                                            </p>
                                         </div>
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
-                                            <p className="text-xs text-gray-400 uppercase">Vol. Equipa</p>
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl shadow-lg relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 p-3 opacity-10 text-blue-400"><Icons.Network /></div>
+                                            <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Volume Restrito de Equipa</p>
                                             <p className="text-3xl font-black text-blue-400 mt-2">${(stats[session.user.id]?.teamVol || 0).toLocaleString()}</p>
                                         </div>
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
-                                            <p className="text-xs text-gray-400 uppercase">Meu Aporte</p>
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl shadow-lg relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 p-3 opacity-10 text-emerald-400"><Icons.Calculator /></div>
+                                            <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Meu Aporte (Soma Custódias)</p>
                                             <p className="text-3xl font-black text-emerald-400 mt-2">${getPersonalSum(network[session.user.id]).toLocaleString()}</p>
                                         </div>
                                     </div>
 
-                                    {}
+                                    {/* Módulos de Distribuição e Rendimentos Avançados */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="bg-gradient-to-br from-[#0e1424] to-[#070b14] border border-indigo-900/40 p-6 rounded-2xl">
-                                            <h3 className="text-sm font-bold text-gray-200 mb-4 border-b border-slate-800 pb-2">Distribuição da Rede (Níveis)</h3>
+                                        <div className="bg-gradient-to-br from-[#0e1424] to-[#070b14] border border-indigo-900/40 p-6 rounded-2xl shadow-xl relative">
+                                            <div className="absolute top-4 right-4 px-2 py-0.5 text-[8px] uppercase tracking-widest bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-full font-bold">Estrutura</div>
+                                            <h3 className="text-sm font-black text-gray-200 mb-5 pb-2 border-b border-slate-800">Distribuição MMN por Níveis</h3>
                                             <div className="space-y-4">
-                                                <div className="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-slate-800/80">
+                                                <div className="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
                                                     <div>
-                                                        <p className="text-xs font-bold text-gray-300">Indicações Diretas (N1)</p>
-                                                        <p className="text-[10px] text-gray-500">Ligados diretamente a si.</p>
+                                                        <p className="text-xs font-bold text-gray-300">Diretos (Nível 1)</p>
+                                                        <p className="text-[9px] text-gray-500 mt-0.5">Ligados a si (10% Bónus)</p>
                                                     </div>
                                                     <span className="text-xl font-black text-white">{stats[session.user.id]?.level1 || 0}</span>
                                                 </div>
-                                                <div className="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-slate-800/80">
+                                                <div className="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
                                                     <div>
-                                                        <p className="text-xs font-bold text-gray-300">Indicações Indiretas (N2)</p>
-                                                        <p className="text-[10px] text-gray-500">Indicados dos seus diretos.</p>
+                                                        <p className="text-xs font-bold text-gray-300">Indiretos (Nível 2)</p>
+                                                        <p className="text-[9px] text-gray-500 mt-0.5">Equipa N1 (5% Bónus)</p>
                                                     </div>
                                                     <span className="text-xl font-black text-blue-400">{stats[session.user.id]?.level2 || 0}</span>
                                                 </div>
-                                                <div className="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-slate-800/80">
+                                                <div className="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
                                                     <div>
-                                                        <p className="text-xs font-bold text-gray-300">Profundidade (N3 em diante)</p>
-                                                        <p className="text-[10px] text-gray-500">Restante equipa abaixo do N2.</p>
+                                                        <p className="text-xs font-bold text-gray-300">Profundidade (N3+)</p>
+                                                        <p className="text-[9px] text-gray-500 mt-0.5">Apenas diferencial VIP se aplica</p>
                                                     </div>
                                                     <span className="text-xl font-black text-indigo-400">{stats[session.user.id]?.level3Plus || 0}</span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="bg-gradient-to-br from-[#0e1424] to-[#070b14] border border-emerald-900/40 p-6 rounded-2xl">
-                                            <h3 className="text-sm font-bold text-gray-200 mb-4 border-b border-slate-800 pb-2">Estimativa de Lucros (Mensal)</h3>
-                                            <div className="space-y-3 font-mono">
-                                                <div className="flex justify-between text-xs">
-                                                    <span className="text-gray-400">Rendimento Pessoal (Custódias)</span>
-                                                    <span className="text-gray-200">${earnings?.personal.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                        <div className="bg-gradient-to-br from-[#0e1424] to-[#070b14] border border-emerald-900/40 p-6 rounded-2xl shadow-xl relative">
+                                            <div className="absolute top-4 right-4 px-2 py-0.5 text-[8px] uppercase tracking-widest bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full font-bold">Projeção Mensal</div>
+                                            <h3 className="text-sm font-black text-gray-200 mb-5 pb-2 border-b border-slate-800">Cálculo de Lucros Estimados</h3>
+                                            <div className="space-y-3.5 font-mono">
+                                                <div className="flex justify-between items-end border-b border-slate-800/50 pb-2">
+                                                    <span className="text-[10px] text-gray-400 font-sans font-bold">Rendimento Pessoal Base</span>
+                                                    <span className="text-sm font-bold text-gray-200">${earnings?.personal.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
                                                 </div>
-                                                <div className="flex justify-between text-xs">
-                                                    <span className="text-gray-400">Comissão Diretos (10% sobre o N1)</span>
-                                                    <span className="text-blue-400">${earnings?.n1.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                                <div className="flex justify-between items-end border-b border-slate-800/50 pb-2">
+                                                    <span className="text-[10px] text-gray-400 font-sans font-bold">Comissão Diretos (10% sobre N1)</span>
+                                                    <span className="text-sm font-bold text-blue-400">${earnings?.n1.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
                                                 </div>
-                                                <div className="flex justify-between text-xs">
-                                                    <span className="text-gray-400">Comissão Indiretos (5% sobre o N2)</span>
-                                                    <span className="text-indigo-400">${earnings?.n2.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                                <div className="flex justify-between items-end border-b border-slate-800/50 pb-2">
+                                                    <span className="text-[10px] text-gray-400 font-sans font-bold">Comissão Indiretos (5% sobre N2)</span>
+                                                    <span className="text-sm font-bold text-indigo-400">${earnings?.n2.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
                                                 </div>
-                                                <div className="flex justify-between text-xs pb-3 border-b border-slate-800/80">
-                                                    <span className="text-gray-400">Bónus Diferencial Liderança VIP</span>
-                                                    <span className="text-amber-400">${earnings?.diff.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                                <div className="flex justify-between items-end pb-3 border-b border-slate-800">
+                                                    <span className="text-[10px] text-gray-400 font-sans font-bold">Bónus Diferencial VIP Global</span>
+                                                    <span className="text-sm font-bold text-amber-400">${earnings?.diff.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
                                                 </div>
-                                                <div className="flex justify-between text-sm font-black pt-1">
-                                                    <span className="text-emerald-500">Total Global Estimado</span>
-                                                    <span className="text-emerald-400">${earnings?.total.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                                <div className="flex justify-between items-center bg-emerald-950/30 p-3 rounded-lg border border-emerald-900/50 mt-2">
+                                                    <span className="text-xs font-black text-emerald-500 font-sans uppercase">Total Global/Mês</span>
+                                                    <span className="text-xl font-black text-emerald-400">${earnings?.total.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -664,23 +755,24 @@
 
                             {activeTab === 'network' && (
                                 <div className="space-y-4">
-                                    <div className="flex justify-between bg-[#0b0e1a] p-4 border border-[#161f35] rounded-2xl">
+                                    <div className="flex justify-between bg-[#0b0e1a] p-4 border border-[#161f35] rounded-2xl items-center shadow-lg">
                                         <div className="bg-slate-950 p-1 rounded-xl flex border border-slate-800">
-                                            <button onClick={() => setViewMode('table')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'text-gray-400'}`}>Tabela CRM</button>
-                                            <button onClick={() => setViewMode('chart')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'chart' ? 'bg-indigo-600 text-white' : 'text-gray-400'}`}>Árvore Visual</button>
+                                            <button onClick={() => setViewMode('table')} className={`px-4 py-1.5 rounded-lg text-[10px] uppercase tracking-widest font-bold transition-all ${viewMode === 'table' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}>Tabela CRM</button>
+                                            <button onClick={() => setViewMode('chart')} className={`px-4 py-1.5 rounded-lg text-[10px] uppercase tracking-widest font-bold transition-all ${viewMode === 'chart' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}>Árvore Gráfica</button>
                                         </div>
-                                        <button onClick={() => openAddModal(session.user.id)} className="bg-indigo-600 text-white text-xs px-3 py-2 rounded-xl font-bold">Novo Indicado Manual</button>
+                                        <button onClick={() => openAddModal(session.user.id)} className="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] uppercase tracking-widest px-4 py-2 rounded-xl font-bold shadow-lg transition-colors">+ Novo Membro</button>
                                     </div>
 
                                     {viewMode === 'table' ? (
                                         <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl overflow-hidden shadow-xl overflow-x-auto">
                                             <table className="w-full text-left">
-                                                <thead className="bg-[#12192c] text-[10px] text-gray-400 uppercase font-black">
+                                                <thead className="bg-[#12192c] text-[9px] text-gray-400 uppercase font-black tracking-widest border-b border-slate-800">
                                                     <tr>
-                                                        <th className="p-3">Membro</th>
-                                                        <th className="p-3">Aporte / Equipa</th>
-                                                        <th className="p-3">Contatos</th>
-                                                        <th className="p-3 text-right">Ações</th>
+                                                        <th className="p-4">Identificação na Rede</th>
+                                                        <th className="p-4">Finanças (Custódia/Equipa)</th>
+                                                        <th className="p-4 text-center">Níveis N1 / N2 / N3+</th>
+                                                        <th className="p-4 text-center">Status VIP</th>
+                                                        <th className="p-4 text-right">Acões</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -688,28 +780,46 @@
                                                         const user = network[key];
                                                         const userStats = stats[key];
                                                         const isRoot = key === session.user.id;
-                                                        const isIndependent = user.userId !== session.user.id && !isRoot;
+                                                        const isIndependent = user.userId && user.userId !== session.user.id && !isRoot;
                                                         const isDirect = network[session.user.id]?.children.includes(key);
                                                         const indent = isRoot ? 0 : (isDirect ? 1 : 2);
 
                                                         return (
-                                                            <tr key={key} className="border-b border-slate-800/40 hover:bg-slate-800/20">
-                                                                <td className="p-3 whitespace-nowrap" style={{ paddingLeft: `${indent * 20 + 12}px` }}>
-                                                                    <div className="text-xs font-bold text-gray-200">{user.name} {isIndependent && <span className="ml-1 text-[8px] bg-emerald-900/40 text-emerald-400 px-1 rounded">SaaS</span>}</div>
-                                                                    <div className="text-[9px] text-gray-500 font-mono">UID: {user.uid}</div>
+                                                            <tr key={key} className="border-b border-slate-800/40 hover:bg-slate-800/30 transition-colors">
+                                                                <td className="p-4 whitespace-nowrap" style={{ paddingLeft: `${indent * 24 + 16}px` }}>
+                                                                    <div className="flex items-center gap-2">
+                                                                        {isIndependent ? <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> : <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>}
+                                                                        <span className="text-xs font-bold text-gray-200">{user.name}</span>
+                                                                    </div>
+                                                                    <div className="text-[9px] text-gray-500 font-mono mt-1 pl-3.5 flex gap-2">
+                                                                        <span>UID: {user.uid}</span>
+                                                                        {!isIndependent && <span>Ref: {user.refCode}</span>}
+                                                                    </div>
                                                                 </td>
-                                                                <td className="p-3 text-xs font-bold">
-                                                                    <div className="text-emerald-400">${getPersonalSum(user).toLocaleString()} (P)</div>
-                                                                    <div className="text-blue-400">${userStats.teamVol.toLocaleString()} (E)</div>
+                                                                <td className="p-4 text-xs font-bold font-mono">
+                                                                    <div className="flex items-center gap-1.5 text-emerald-400">
+                                                                        ${getPersonalSum(user).toLocaleString()}
+                                                                        <span className="text-[8px] bg-emerald-950/50 text-emerald-500 px-1.5 rounded" title="Quantidade de Custódias">{user.custodias?.length || 0}c</span>
+                                                                    </div>
+                                                                    <div className="text-blue-400 text-[10px] mt-0.5">Eqp: ${userStats.teamVol.toLocaleString()}</div>
                                                                 </td>
-                                                                <td className="p-3 text-[10px] text-gray-400">
-                                                                    <div>{user.email || '--'}</div>
-                                                                    <div>{user.phone || '--'}</div>
+                                                                <td className="p-4 text-center text-[10px] font-mono">
+                                                                    <div className="inline-flex gap-1.5 bg-[#0e1222] border border-slate-800 px-2 py-1 rounded">
+                                                                        <span className="text-gray-300" title="Diretos N1">{userStats.level1}</span><span className="text-slate-600">|</span>
+                                                                        <span className="text-blue-400" title="Indiretos N2">{userStats.level2}</span><span className="text-slate-600">|</span>
+                                                                        <span className="text-indigo-400" title="Outros N3+">{userStats.level3Plus}</span>
+                                                                    </div>
                                                                 </td>
-                                                                <td className="p-3 text-right">
-                                                                    <div className="flex justify-end gap-2 text-xs">
-                                                                        {!isIndependent && <button onClick={() => openEditModal(key)} className="text-gray-400 bg-slate-800 px-2 py-1 rounded">Editar</button>}
-                                                                        {!isIndependent && <button onClick={() => openAddModal(key)} className="text-indigo-400 bg-slate-800 px-2 py-1 rounded">+ Sub</button>}
+                                                                <td className="p-4 text-center">
+                                                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${userStats.level === 'Membro' ? 'bg-slate-800 text-slate-500' : 'bg-indigo-600/20 text-indigo-400 border border-indigo-900/30'}`}>
+                                                                        {userStats.vipLabel}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="p-4 text-right">
+                                                                    <div className="flex justify-end gap-1.5">
+                                                                        {!isIndependent && <button onClick={() => openEditModal(key)} className="text-[10px] text-gray-400 bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded transition-colors font-bold">Editar</button>}
+                                                                        {!isIndependent && <button onClick={() => openAddModal(key)} className="text-[10px] text-indigo-400 bg-indigo-950/40 hover:bg-indigo-900 px-2.5 py-1 rounded transition-colors font-bold">+Sub</button>}
+                                                                        {!isRoot && !isIndependent && <button onClick={() => handleRemoveMember(key)} className="text-red-500 hover:text-red-400 p-1.5 hover:bg-red-950/40 rounded transition-colors" title="Excluir"><Icons.Trash /></button>}
                                                                     </div>
                                                                 </td>
                                                             </tr>
@@ -719,11 +829,21 @@
                                             </table>
                                         </div>
                                     ) : (
-                                        <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl p-4 relative">
-                                            <div className={`relative bg-slate-950/40 rounded-xl border border-slate-900 min-h-[500px] overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`} {...handleMouseEvents}>
-                                                <div className="absolute inset-0 flex justify-center items-start pt-16 transition-transform" style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: 'top center' }}>
+                                        <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl p-4 relative shadow-xl overflow-hidden">
+                                            {/* Controladores de Zoom Flutuantes */}
+                                            <div className="absolute bottom-6 right-6 z-30 flex items-center gap-1.5 bg-slate-900/95 p-1.5 rounded-xl border border-slate-800 shadow-2xl">
+                                                <button onClick={() => setZoom(z => Math.min(2.0, z + 0.1))} className="w-7 h-7 rounded-lg bg-indigo-600/30 text-indigo-400 font-black hover:bg-indigo-600 hover:text-white transition-colors">＋</button>
+                                                <span className="text-[10px] text-gray-400 font-bold font-mono px-1 w-10 text-center">{Math.round(zoom * 100)}%</span>
+                                                <button onClick={() => setZoom(z => Math.max(0.4, z - 0.1))} className="w-7 h-7 rounded-lg bg-indigo-600/30 text-indigo-400 font-black hover:bg-indigo-600 hover:text-white transition-colors">－</button>
+                                                <button onClick={() => { setZoom(1.0); setPanOffset({ x: 0, y: 0 }); }} className="text-[9px] uppercase font-bold bg-slate-800 text-gray-400 px-2.5 py-1.5 rounded-lg hover:text-white">Centrar</button>
+                                            </div>
+                                            <div className="absolute top-4 left-4 z-30 pointer-events-none text-[9px] bg-slate-900/80 px-3 py-1.5 rounded-lg text-gray-500 font-bold uppercase tracking-widest border border-slate-800">
+                                                Arraste para mover
+                                            </div>
+                                            <div className={`relative bg-slate-950/40 rounded-xl border border-slate-900 min-h-[550px] overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`} {...handleMouseEvents}>
+                                                <div className="absolute inset-0 flex justify-center items-start pt-16 transition-transform ease-out duration-75" style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: 'top center' }}>
                                                     <div className="inline-block pointer-events-auto">
-                                                        <TreeMemberCard memberId={session.user.id} network={network} stats={stats} onEdit={openEditModal} onAddSub={openAddModal} onRemove={()=>{}} currentUserId={session.user.id} />
+                                                        <TreeMemberCard memberId={session.user.id} network={network} stats={stats} onEdit={openEditModal} onAddSub={openAddModal} onRemove={handleRemoveMember} currentUserId={session.user.id} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -734,46 +854,88 @@
                         </div>
                     </main>
 
-                    {/* Modal de Cadastro/Edição Seguro */}
+                    {}
                     {showModal && (
-                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-                            <div className="bg-[#0b0e1a] border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
-                                <h3 className="font-bold text-lg text-white border-b border-slate-800 pb-3">
-                                    {modalMode === 'add' ? 'Adicionar Indicado' : `Editar ${form.name}`}
-                                </h3>
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+                            <div className="bg-[#0b0e1a] border border-[#1c273e] rounded-3xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl">
+                                <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                                    <h3 className="font-black text-lg text-white">
+                                        {modalMode === 'add' ? 'Adicionar Novo Indicado' : `Editar Perfil de ${form.name}`}
+                                    </h3>
+                                    <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-white transition-colors">
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="col-span-2">
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Nome Completo *</label>
-                                        <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                                        <label className="block text-[10px] text-gray-400 uppercase font-black mb-1">Nome Completo *</label>
+                                        <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="João Silva" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:border-indigo-500 outline-none" />
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">E-mail</label>
-                                        <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                                        <label className="block text-[10px] text-gray-400 uppercase font-black mb-1">E-mail</label>
+                                        <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="joao@email.com" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:border-indigo-500 outline-none" />
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Telemóvel</label>
-                                        <input type="text" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                                        <label className="block text-[10px] text-gray-400 uppercase font-black mb-1">Telefone</label>
+                                        <input type="text" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="+351 912345678" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:border-indigo-500 outline-none" />
                                     </div>
                                     
-                                    <div className="col-span-2 bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 mt-2">
-                                        <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Custódias / Aportes</h4>
-                                        {}
-                                        {formCustodias.map((cust, idx) => (
-                                            <div key={cust.id} className="bg-slate-950 p-3 rounded-lg border border-slate-800 flex flex-wrap gap-2">
-                                                <input type="text" value={cust.label} onChange={(e) => { const u = [...formCustodias]; u[idx].label = e.target.value; setFormCustodias(u); }} className="flex-1 min-w-[100px] bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white" placeholder="Nome Banca"/>
-                                                <div className="flex gap-2 w-full sm:w-auto">
-                                                    <input type="number" value={cust.value} onChange={(e) => { const u = [...formCustodias]; u[idx].value = parseFloat(e.target.value)||0; setFormCustodias(u); }} className="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white" placeholder="Valor ($)"/>
-                                                    <input type="number" value={cust.rate} onChange={(e) => { const u = [...formCustodias]; u[idx].rate = parseFloat(e.target.value)||0; setFormCustodias(u); }} className="w-20 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white" placeholder="Taxa (%)"/>
-                                                    <button onClick={() => setFormCustodias(formCustodias.filter(c => c.id !== cust.id))} className="px-2 text-red-500 text-xs font-bold hover:bg-red-500/10 rounded transition-colors">X</button>
+                                    {/* Configuração de Custódias Múltiplas com Rate (%) */}
+                                    <div className="col-span-2 bg-[#12192c] p-4 rounded-xl border border-slate-800 space-y-4 mt-2">
+                                        <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                                            <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Multi-Custódias</h4>
+                                            <span className="text-[10px] font-mono text-gray-400">Total: {formCustodias.length}</span>
+                                        </div>
+                                        
+                                        <div className="space-y-3 max-h-[220px] overflow-y-auto no-scrollbar pr-1">
+                                            {formCustodias.map((cust, idx) => (
+                                                <div key={cust.id} className="bg-slate-950 p-3 rounded-xl border border-slate-800/80 relative">
+                                                    <button onClick={() => {
+                                                        if(formCustodias.length === 1) return showNotification("Deve manter pelo menos 1 custódia.", true);
+                                                        setFormCustodias(formCustodias.filter(c => c.id !== cust.id));
+                                                    }} className="absolute top-2 right-2 text-red-500 hover:text-red-400 text-[10px] font-bold">🗑️ Del</button>
+                                                    <div className="grid grid-cols-12 gap-2 mt-2">
+                                                        <div className="col-span-6">
+                                                            <label className="block text-[8px] text-gray-500 uppercase font-black mb-1">Rótulo / Plano</label>
+                                                            <input type="text" value={cust.label} onChange={(e) => { const u = [...formCustodias]; u[idx].label = e.target.value; setFormCustodias(u); }} placeholder="Plano Básico" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white outline-none"/>
+                                                        </div>
+                                                        <div className="col-span-3">
+                                                            <label className="block text-[8px] text-gray-500 uppercase font-black mb-1">Valor ($)</label>
+                                                            <input type="number" value={cust.value} onChange={(e) => { const u = [...formCustodias]; u[idx].value = parseFloat(e.target.value)||0; setFormCustodias(u); }} placeholder="1000" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white outline-none"/>
+                                                        </div>
+                                                        <div className="col-span-3">
+                                                            <label className="block text-[8px] text-gray-500 uppercase font-black mb-1">Taxa (%)</label>
+                                                            <input type="number" value={cust.rate} onChange={(e) => { const u = [...formCustodias]; u[idx].rate = parseFloat(e.target.value)||0; setFormCustodias(u); }} placeholder="15" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white outline-none"/>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
-                                        <button onClick={() => setFormCustodias([...formCustodias, { id: 'c_' + Date.now(), label: 'Nova Banca', value: 100, rate: 15 }])} className="w-full border border-dashed border-indigo-500/40 hover:bg-indigo-500/10 text-indigo-400 py-2 rounded-xl text-xs font-bold transition-all">+ Adicionar Valor</button>
+                                            ))}
+                                        </div>
+                                        <button onClick={() => setFormCustodias([...formCustodias, { id: 'c_' + Date.now(), label: 'Novo Aporte', value: 100, rate: 15 }])} className="w-full border border-dashed border-indigo-500/40 hover:bg-indigo-500/10 text-indigo-400 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all">+ Add Custódia</button>
+                                        
+                                        <div className="pt-2 border-t border-slate-800 flex justify-between text-[10px] font-black uppercase text-gray-400">
+                                            <span>Soma: <span className="text-emerald-400">${formCustodias.reduce((s, c) => s + (parseFloat(c.value) || 0), 0).toLocaleString()}</span></span>
+                                            <span>Rend: <span className="text-indigo-400">${formCustodias.reduce((s, c) => s + ((parseFloat(c.value) || 0) * (parseFloat(c.rate) || 0) / 100), 0).toLocaleString()}/mês</span></span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
-                                    <button onClick={() => setShowModal(false)} className="bg-slate-800 text-white px-5 py-2 rounded-xl text-xs font-bold">Cancelar</button>
-                                    <button onClick={handleSaveMember} className="bg-indigo-600 text-white px-5 py-2 rounded-xl shadow-lg text-xs font-bold">Salvar e Sincronizar</button>
+                                    <button onClick={() => setShowModal(false)} className="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase transition-colors">Cancelar</button>
+                                    <button onClick={handleSaveMember} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-900/40 text-xs font-black uppercase transition-colors">Salvar e Sincronizar</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal Confirmação */}
+                    {confirmModal.show && (
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+                            <div className="bg-[#0b0e1a] border border-red-900/50 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+                                <h3 className="font-black text-lg text-red-400 flex items-center gap-2">⚠️ {confirmModal.title}</h3>
+                                <p className="text-sm text-gray-300 leading-relaxed">{confirmModal.message}</p>
+                                <div className="flex gap-3 justify-end pt-2">
+                                    <button onClick={() => setConfirmModal({ show: false, title: '', message: '', action: null })} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase transition-colors">Cancelar</button>
+                                    <button onClick={() => { if (confirmModal.action) confirmModal.action(); setConfirmModal({ show: false, title: '', message: '', action: null }); }} className="bg-red-600 hover:bg-red-500 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase transition-colors">Confirmar Exclusão</button>
                                 </div>
                             </div>
                         </div>
@@ -783,7 +945,7 @@
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(<ErrorBoundary><App /></ErrorBoundary>);
     </script>
 </body>
 </html>
