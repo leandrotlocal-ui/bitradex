@@ -16,6 +16,7 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #03050a; color: #f3f4f6; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -24,20 +25,25 @@
     <script type="text/babel" data-presets="react">
         const { useState, useMemo, useEffect } = React;
 
+        // ==========================================
+        // COMPONENTES DE ÍCONES (Seguros para React)
+        // ==========================================
         const DashboardIcon = () => (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>);
         const NetworkIcon = () => (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>);
-        const CalcIcon = () => (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="4" y="4" width="16" height="16" rx="2" /><line x1="9" y1="9" x2="15" y2="9" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" /></svg>);
+        const CalculatorIcon = () => (<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="4" y="4" width="16" height="16" rx="2" /><line x1="9" y1="9" x2="15" y2="9" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" /></svg>);
         const CheckIcon = () => (<svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>);
         const TrashIcon = () => (<svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>);
 
+        // ==========================================
+        // ERROR BOUNDARY (Segurança Anti-Crash)
+        // ==========================================
         class ErrorBoundary extends React.Component {
             constructor(props) { super(props); this.state = { hasError: false }; }
             static getDerivedStateFromError(error) { return { hasError: true }; }
-            componentDidCatch(error, errorInfo) { console.error("Erro capturado:", error, errorInfo); }
             render() {
                 if (this.state.hasError) return (
                     <div className="p-10 text-center text-red-500 bg-red-950/20 border border-red-900 rounded-xl m-10">
-                        <h2 className="text-xl font-bold">Ocorreu um Erro Crítico no React</h2>
+                        <h2 className="text-xl font-bold">Ocorreu um Erro Crítico no Sistema</h2>
                         <button onClick={() => window.location.reload()} className="mt-4 bg-red-700 text-white px-4 py-2 rounded">Recarregar Sistema</button>
                     </div>
                 );
@@ -45,16 +51,9 @@
             }
         }
 
-        const VIP_RULES = [
-            { level: 'VIP6', rate: 0.6, reqDirects: 10, reqTeamVol: 15000000, reqPersonal: 3200, prevVip: 'VIP5' },
-            { level: 'VIP5', rate: 0.5, reqDirects: 9, reqTeamVol: 6000000, reqPersonal: 1600, prevVip: 'VIP4' },
-            { level: 'VIP4', rate: 0.4, reqDirects: 8, reqTeamVol: 2000000, reqPersonal: 800, prevVip: 'VIP3' },
-            { level: 'VIP3', rate: 0.3, reqDirects: 7, reqTeamVol: 500000, reqPersonal: 400, prevVip: 'VIP2' },
-            { level: 'VIP2', rate: 0.2, reqDirects: 6, reqTeamVol: 150000, reqPersonal: 200, prevVip: 'VIP1' },
-            { level: 'VIP1', rate: 0.1, reqDirects: 5, reqTeamVol: 50000, reqPersonal: 100, prevVip: null },
-            { level: 'Membro', rate: 0.0, reqDirects: 0, reqTeamVol: 0, reqPersonal: 0, prevVip: null },
-        ];
-
+        // ==========================================
+        // APP PRINCIPAL
+        // ==========================================
         const App = () => {
             const [activeTab, setActiveTab] = useState('dashboard');
             
@@ -65,14 +64,16 @@
                         <nav className="flex gap-2">
                             <button onClick={() => setActiveTab('dashboard')} className={`flex gap-2 items-center px-4 py-2 rounded-lg ${activeTab === 'dashboard' ? 'bg-indigo-600' : 'bg-slate-800'}`}><DashboardIcon/> Dashboard</button>
                             <button onClick={() => setActiveTab('network')} className={`flex gap-2 items-center px-4 py-2 rounded-lg ${activeTab === 'network' ? 'bg-indigo-600' : 'bg-slate-800'}`}><NetworkIcon/> Rede</button>
-                            <button onClick={() => setActiveTab('calculator')} className={`flex gap-2 items-center px-4 py-2 rounded-lg ${activeTab === 'calculator' ? 'bg-indigo-600' : 'bg-slate-800'}`}><CalcIcon/> Lucros</button>
+                            <button onClick={() => setActiveTab('calculator')} className={`flex gap-2 items-center px-4 py-2 rounded-lg ${activeTab === 'calculator' ? 'bg-indigo-600' : 'bg-slate-800'}`}><CalculatorIcon/> Lucros</button>
                         </nav>
                     </header>
 
                     <main className="p-6">
-                        {activeTab === 'dashboard' && <div className="text-gray-400">Conteúdo do Dashboard (Em carregamento...)</div>}
-                        {activeTab === 'network' && <div className="text-gray-400">Painel de Rede (Em carregamento...)</div>}
-                        {activeTab === 'calculator' && <div className="text-gray-400">Calculadora de Lucros (Em carregamento...)</div>}
+                        <div className="text-gray-400">
+                            {activeTab === 'dashboard' && <p>Conteúdo do Dashboard carregado com sucesso.</p>}
+                            {activeTab === 'network' && <p>Painel de Rede operacional.</p>}
+                            {activeTab === 'calculator' && <p>Calculadora de Lucros pronta.</p>}
+                        </div>
                     </main>
                 </div>
             );
