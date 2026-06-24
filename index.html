@@ -69,6 +69,11 @@
             return user.custodias.reduce((sum, c) => sum + (parseFloat(c.value) || 0), 0);
         };
 
+        const getMonthlyYield = (user) => {
+            if (!user || !user.custodias) return 0;
+            return user.custodias.reduce((sum, c) => sum + ((parseFloat(c.value) || 0) * ((parseFloat(c.rate) || 0) / 100)), 0);
+        };
+
         const TreeMemberCard = ({ memberId, network, stats, onEdit, onAddSub, onRemove, currentUserId }) => {
             const member = network[memberId];
             const memberStats = stats[memberId];
@@ -104,6 +109,13 @@
                         <h4 className="text-xs font-bold text-gray-100 truncate mt-1">{member.name}</h4>
                         <p className="text-[9px] text-slate-500 font-mono mt-0.5">UID: {member.uid}</p>
                         
+                        {}
+                        <div className="mt-2 pt-2 border-t border-slate-800/60 space-y-1 text-[9px] text-slate-400 bg-slate-950/50 p-2 rounded-lg w-full">
+                            <div className="flex justify-between"><span>Diretos (N1):</span><span className="font-bold text-gray-200">{memberStats.level1}</span></div>
+                            <div className="flex justify-between"><span>Indiretos (N2):</span><span className="font-bold text-blue-400">{memberStats.level2}</span></div>
+                            <div className="flex justify-between"><span>Outros (N3+):</span><span className="font-bold text-indigo-300">{memberStats.level3Plus}</span></div>
+                        </div>
+
                         <div className="mt-3 pt-2.5 border-t border-slate-850 grid grid-cols-2 gap-2 text-[10px]">
                             <div><span className="text-[8px] text-slate-500 block uppercase font-extrabold tracking-wider">Aporte Total</span><span className="font-semibold text-gray-300">${getPersonalSum(member).toLocaleString()}</span></div>
                             <div><span className="text-[8px] text-slate-500 block uppercase font-extrabold tracking-wider">Vol. Equipa</span><span className="font-semibold text-blue-400">${memberStats.teamVol.toLocaleString()}</span></div>
@@ -364,6 +376,39 @@
                 return visible;
             }, [network, session]);
 
+            const earnings = useMemo(() => {
+                if (!session || Object.keys(network).length === 0 || !stats[session.user.id]) return { personal: 0, n1: 0, n2: 0, diff: 0, total: 0 };
+                
+                const myId = session.user.id;
+                const myRate = VIP_RULES.find(r => r.level === stats[myId]?.level)?.rate || 0;
+                let n1 = 0, n2 = 0, diff = 0;
+
+                const personal = getMonthlyYield(network[myId]);
+
+                const traverseEarnings = (nodeId, depth) => {
+                    const node = network[nodeId];
+                    if (!node) return;
+                    
+                    if (nodeId !== myId) {
+                        const nodeYield = getMonthlyYield(node);
+                        
+                        // 10% do rendimento de diretos (N1) e 5% de indiretos (N2)
+                        if (depth === 1) n1 += nodeYield * 0.10;
+                        if (depth === 2) n2 += nodeYield * 0.05;
+
+                        // Diferencial VIP: Minha percentagem menos a percentagem do membro da equipa
+                        const nodeVipRate = VIP_RULES.find(r => r.level === stats[nodeId]?.level)?.rate || 0;
+                        if (myRate > nodeVipRate) {
+                            diff += nodeYield * (myRate - nodeVipRate);
+                        }
+                    }
+                    node.children.forEach(cid => traverseEarnings(cid, depth + 1));
+                };
+
+                traverseEarnings(myId, 0);
+                return { personal, n1, n2, diff, total: personal + n1 + n2 + diff };
+            }, [network, session, stats]);
+
             const stats = useMemo(() => {
                 if (!session || Object.keys(network).length === 0) return {};
                 const results = {};
@@ -558,6 +603,62 @@
                                             <p className="text-3xl font-black text-emerald-400 mt-2">${getPersonalSum(network[session.user.id]).toLocaleString()}</p>
                                         </div>
                                     </div>
+
+                                    {}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="bg-gradient-to-br from-[#0e1424] to-[#070b14] border border-indigo-900/40 p-6 rounded-2xl">
+                                            <h3 className="text-sm font-bold text-gray-200 mb-4 border-b border-slate-800 pb-2">Distribuição da Rede (Níveis)</h3>
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-slate-800/80">
+                                                    <div>
+                                                        <p className="text-xs font-bold text-gray-300">Indicações Diretas (N1)</p>
+                                                        <p className="text-[10px] text-gray-500">Ligados diretamente a si.</p>
+                                                    </div>
+                                                    <span className="text-xl font-black text-white">{stats[session.user.id]?.level1 || 0}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-slate-800/80">
+                                                    <div>
+                                                        <p className="text-xs font-bold text-gray-300">Indicações Indiretas (N2)</p>
+                                                        <p className="text-[10px] text-gray-500">Indicados dos seus diretos.</p>
+                                                    </div>
+                                                    <span className="text-xl font-black text-blue-400">{stats[session.user.id]?.level2 || 0}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-slate-800/80">
+                                                    <div>
+                                                        <p className="text-xs font-bold text-gray-300">Profundidade (N3 em diante)</p>
+                                                        <p className="text-[10px] text-gray-500">Restante equipa abaixo do N2.</p>
+                                                    </div>
+                                                    <span className="text-xl font-black text-indigo-400">{stats[session.user.id]?.level3Plus || 0}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-gradient-to-br from-[#0e1424] to-[#070b14] border border-emerald-900/40 p-6 rounded-2xl">
+                                            <h3 className="text-sm font-bold text-gray-200 mb-4 border-b border-slate-800 pb-2">Estimativa de Lucros (Mensal)</h3>
+                                            <div className="space-y-3 font-mono">
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-gray-400">Rendimento Pessoal (Custódias)</span>
+                                                    <span className="text-gray-200">${earnings?.personal.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                                </div>
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-gray-400">Comissão Diretos (10% sobre o N1)</span>
+                                                    <span className="text-blue-400">${earnings?.n1.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                                </div>
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-gray-400">Comissão Indiretos (5% sobre o N2)</span>
+                                                    <span className="text-indigo-400">${earnings?.n2.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                                </div>
+                                                <div className="flex justify-between text-xs pb-3 border-b border-slate-800/80">
+                                                    <span className="text-gray-400">Bónus Diferencial Liderança VIP</span>
+                                                    <span className="text-amber-400">${earnings?.diff.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm font-black pt-1">
+                                                    <span className="text-emerald-500">Total Global Estimado</span>
+                                                    <span className="text-emerald-400">${earnings?.total.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
@@ -656,14 +757,18 @@
                                     
                                     <div className="col-span-2 bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 mt-2">
                                         <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Custódias / Aportes</h4>
+                                        {}
                                         {formCustodias.map((cust, idx) => (
-                                            <div key={cust.id} className="bg-slate-950 p-3 rounded-lg border border-slate-800 flex gap-2">
-                                                <input type="text" value={cust.label} onChange={(e) => { const u = [...formCustodias]; u[idx].label = e.target.value; setFormCustodias(u); }} className="w-1/2 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white" placeholder="Nome Banca"/>
-                                                <input type="number" value={cust.value} onChange={(e) => { const u = [...formCustodias]; u[idx].value = parseFloat(e.target.value)||0; setFormCustodias(u); }} className="w-1/4 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white" placeholder="Valor"/>
-                                                <button onClick={() => setFormCustodias(formCustodias.filter(c => c.id !== cust.id))} className="w-1/4 text-red-500 text-xs font-bold">X</button>
+                                            <div key={cust.id} className="bg-slate-950 p-3 rounded-lg border border-slate-800 flex flex-wrap gap-2">
+                                                <input type="text" value={cust.label} onChange={(e) => { const u = [...formCustodias]; u[idx].label = e.target.value; setFormCustodias(u); }} className="flex-1 min-w-[100px] bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white" placeholder="Nome Banca"/>
+                                                <div className="flex gap-2 w-full sm:w-auto">
+                                                    <input type="number" value={cust.value} onChange={(e) => { const u = [...formCustodias]; u[idx].value = parseFloat(e.target.value)||0; setFormCustodias(u); }} className="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white" placeholder="Valor ($)"/>
+                                                    <input type="number" value={cust.rate} onChange={(e) => { const u = [...formCustodias]; u[idx].rate = parseFloat(e.target.value)||0; setFormCustodias(u); }} className="w-20 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white" placeholder="Taxa (%)"/>
+                                                    <button onClick={() => setFormCustodias(formCustodias.filter(c => c.id !== cust.id))} className="px-2 text-red-500 text-xs font-bold hover:bg-red-500/10 rounded transition-colors">X</button>
+                                                </div>
                                             </div>
                                         ))}
-                                        <button onClick={() => setFormCustodias([...formCustodias, { id: 'c_' + Date.now(), label: 'Nova Banca', value: 100, rate: 15 }])} className="w-full border border-dashed border-indigo-500/40 text-indigo-400 py-2 rounded-xl text-xs font-bold">+ Adicionar Valor</button>
+                                        <button onClick={() => setFormCustodias([...formCustodias, { id: 'c_' + Date.now(), label: 'Nova Banca', value: 100, rate: 15 }])} className="w-full border border-dashed border-indigo-500/40 hover:bg-indigo-500/10 text-indigo-400 py-2 rounded-xl text-xs font-bold transition-all">+ Adicionar Valor</button>
                                     </div>
                                 </div>
                                 <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
