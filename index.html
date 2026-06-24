@@ -83,7 +83,8 @@ const AuthScreen = ({ onAuth }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
-    const [refUpline, setRefUpline] = useState('');
+    const [uidInput, setUidInput] = useState('');
+    const [uplineUid, setUplineUid] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -99,14 +100,19 @@ const AuthScreen = ({ onAuth }) => {
     const handleRegister = async (e) => {
         e.preventDefault();
         if (!name.trim()) { setError('Nome é obrigatório.'); return; }
+        if (!uidInput.trim()) { setError('UID é obrigatório.'); return; }
         setLoading(true); setError('');
-        const refCode = 'REF-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+        // Verifica se o UID já está em uso
+        const { data: existing } = await sb().from('user_profiles').select('user_id').eq('uid', uidInput.trim()).single();
+        if (existing) { setError('Este UID já está em uso. Verifique com a plataforma Bitradex.'); setLoading(false); return; }
+
         const { data, error } = await sb().auth.signUp({
             email, password,
-            options: { data: { display_name: name, ref_code: refCode, upline_ref: refUpline.trim().toUpperCase() || null } }
+            options: { data: { display_name: name, uid: uidInput.trim(), upline_uid: uplineUid.trim() || null } }
         });
         if (error) { setError(error.message); setLoading(false); return; }
-        setSuccess('Conta criada! Verifique seu e-mail para confirmar e depois faça login.');
+        setSuccess('Conta criada! Faça login para entrar no painel.');
         setLoading(false);
     };
 
@@ -157,12 +163,20 @@ const AuthScreen = ({ onAuth }) => {
                                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none text-gray-200" placeholder="Mínimo 6 caracteres"/>
                         </div>
                         {mode === 'register' && (
-                            <div>
-                                <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Código do seu Upline (opcional)</label>
-                                <input type="text" value={refUpline} onChange={e => setRefUpline(e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none text-gray-200 font-mono uppercase" placeholder="REF-XXXXXX"/>
-                                <p className="text-[9px] text-gray-500 mt-1">Se alguém te indicou, coloque o código REF do seu upline para conectar as redes.</p>
-                            </div>
+                            <>
+                                <div>
+                                    <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Seu UID Bitradex *</label>
+                                    <input type="text" value={uidInput} onChange={e => setUidInput(e.target.value)} required
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none text-gray-200 font-mono" placeholder="Ex: 1234567890"/>
+                                    <p className="text-[9px] text-gray-500 mt-1">O UID numérico da sua conta na plataforma Bitradex.</p>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">UID do seu Upline (opcional)</label>
+                                    <input type="text" value={uplineUid} onChange={e => setUplineUid(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none text-gray-200 font-mono" placeholder="Ex: 9876543210"/>
+                                    <p className="text-[9px] text-gray-500 mt-1">Se alguém te indicou, coloque o UID dele para conectar as redes.</p>
+                                </div>
+                            </>
                         )}
                         <button type="submit" disabled={loading}
                             className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-950/40 mt-2">
@@ -410,11 +424,11 @@ const App = () => {
         setAppLoading(false);
     };
 
-    const loadUplineIntoNetwork = async (net, uplineRef) => {
-        // Busca o perfil do upline pelo ref_code
+    const loadUplineIntoNetwork = async (net, uplineUid) => {
+        // Busca o perfil do upline pelo UID numérico
         const { data: uplineProfile } = await sb().from('user_profiles')
-            .select('user_id, display_name, ref_code, email')
-            .eq('ref_code', uplineRef.toUpperCase())
+            .select('user_id, display_name, uid, email')
+            .eq('uid', uplineUid)
             .single();
 
         if (!uplineProfile) return;
@@ -431,8 +445,8 @@ const App = () => {
             net[uplineId] = {
                 id: uplineId,
                 name: uplineProfile.display_name + ' (Seu Upline)',
-                uid: 'UID-' + uplineProfile.user_id.slice(0, 6).toUpperCase(),
-                refCode: uplineProfile.ref_code,
+                uid: uplineProfile.uid,
+                refCode: uplineProfile.uid,
                 email: uplineProfile.email,
                 phone: '',
                 custodias: uplineRoot.custodias || [],
@@ -477,16 +491,16 @@ const App = () => {
     const handleLinkUpline = async () => {
         if (!linkRefInput.trim()) return;
         setLinkLoading(true);
-        const ref = linkRefInput.trim().toUpperCase();
+        const uid = linkRefInput.trim();
 
-        // Verifica se o upline existe
+        // Verifica se o upline existe pelo UID
         const { data: uplineProfile } = await sb().from('user_profiles')
-            .select('user_id, display_name, ref_code')
-            .eq('ref_code', ref)
+            .select('user_id, display_name, uid')
+            .eq('uid', uid)
             .single();
 
         if (!uplineProfile) {
-            notify('Código REF não encontrado. Verifique com seu upline.', 'error');
+            notify('UID não encontrado. Verifique com seu upline.', 'error');
             setLinkLoading(false);
             return;
         }
@@ -496,12 +510,11 @@ const App = () => {
             return;
         }
 
-        // Atualiza perfil do usuário com o upline_ref
-        const { error } = await sb().from('user_profiles').update({ upline_ref: ref }).eq('user_id', authUser.id);
+        // Atualiza perfil do usuário com o upline_uid
+        const { error } = await sb().from('user_profiles').update({ upline_ref: uid }).eq('user_id', authUser.id);
         if (error) { notify('Erro ao salvar conexão: ' + error.message, 'error'); setLinkLoading(false); return; }
 
-        // Atualiza estado local e recarrega
-        setProfile(prev => ({ ...prev, upline_ref: ref }));
+        setProfile(prev => ({ ...prev, upline_ref: uid }));
         notify(`Conectado com sucesso ao upline: ${uplineProfile.display_name}!`, 'success');
         setLinkLoading(false);
         setShowLinkPanel(false);
@@ -509,7 +522,7 @@ const App = () => {
 
         // Recarrega rede com upline
         const net = { ...network };
-        await loadUplineIntoNetwork(net, ref);
+        await loadUplineIntoNetwork(net, uid);
         setNetwork({ ...net });
     };
 
@@ -808,11 +821,11 @@ const App = () => {
                 <div className="bg-[#0d1225] border-b border-indigo-900/40 px-4 py-4">
                     <div className="max-w-xl mx-auto">
                         <p className="text-xs font-bold text-indigo-300 mb-2 flex items-center gap-2"><Ico.Link/> Conectar à rede do seu upline</p>
-                        <p className="text-[10px] text-gray-500 mb-3">Peça o código REF ao seu upline e cole abaixo. Sua rede ficará visível abaixo da rede dele.</p>
+                        <p className="text-[10px] text-gray-500 mb-3">Peça o <strong>UID numérico</strong> ao seu upline e cole abaixo.</p>
                         <div className="flex gap-2">
                             <input type="text" value={linkRefInput} onChange={e => setLinkRefInput(e.target.value)}
-                                className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono uppercase text-gray-200 focus:border-indigo-500 focus:outline-none"
-                                placeholder="REF-XXXXXX"/>
+                                className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-gray-200 focus:border-indigo-500 focus:outline-none"
+                                placeholder="UID numérico do upline"/>
                             <button onClick={handleLinkUpline} disabled={linkLoading}
                                 className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all">
                                 {linkLoading ? '...' : 'Conectar'}
