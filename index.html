@@ -41,9 +41,6 @@
     <script type="text/babel" data-presets="react">
         const { useState, useMemo, useEffect } = React;
 
-        // =========================================================================
-        // CREDENCIAIS INTEGRADAS DO SEU PROJETO SUPABASE
-        // =========================================================================
         if (!window.SUPABASE_URL) window.SUPABASE_URL = "https://ntqiunpljjehuiqdjetc.supabase.co";
         if (!window.SUPABASE_ANON_KEY) window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50cWl1bnBsamplaHVpcWRqZXRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjY0NDAsImV4cCI6MjA5NzgwMjQ0MH0.N39lOduuu-pLysAWP6t0PSe6HFdmQELYXsXJ7IwDwpY";
         
@@ -90,140 +87,6 @@
         const getMonthlyYield = (user) => {
             if (!user || !user.custodias) return 0;
             return user.custodias.reduce((sum, c) => sum + ((parseFloat(c.value) || 0) * ((parseFloat(c.rate) || 0) / 100)), 0);
-        };
-
-        const migrateNetworkData = (rawNetwork) => {
-            const migrated = { ...rawNetwork };
-            Object.keys(migrated).forEach(key => {
-                const u = migrated[key];
-                if (u && (!u.custodias || !Array.isArray(u.custodias))) {
-                    u.custodias = [
-                        { id: 'c_mig_' + key, label: 'Custódia Bitradex', value: parseFloat(u.personal) || 0, rate: 15 }
-                    ];
-                }
-            });
-            return migrated;
-        };
-
-        const getFactoryCleanState = () => {
-            return {
-                'root': { 
-                    id: 'root', 
-                    name: 'Você (Investidor Primário)', 
-                    uid: 'UID-MASTER', 
-                    refCode: 'REF-MASTER', 
-                    email: 'lider@email.com', 
-                    phone: '+351 900 000 000', 
-                    custodias: [
-                        { id: 'c_root_1', label: 'Custódia Fixo 15%', value: 2200, rate: 15 }
-                    ],
-                    children: ['B', 'C', 'D', 'E', 'F'] 
-                },
-                'patriarca': {
-                    id: 'patriarca',
-                    name: 'Patriarca Bitradex',
-                    uid: 'UID-PATRIARCA',
-                    refCode: 'REF-PATRIARCA',
-                    email: 'patriarca@bitradex.com',
-                    phone: '+351 999 999 999',
-                    custodias: [
-                        { id: 'c_pat_1', label: 'Banca Master High-Yield', value: 5000, rate: 15 }
-                    ],
-                    children: ['root', 'b_independent_leg']
-                },
-                'b_independent_leg': {
-                    id: 'b_independent_leg',
-                    name: 'Linha Independente B (Parceiro Externo)',
-                    uid: 'UID-LEG-B',
-                    refCode: 'REF-LEGB',
-                    email: 'parceiro@bitradex.com',
-                    phone: '+351 911 111 111',
-                    custodias: [
-                        { id: 'c_leg_1', label: 'Custódia Base', value: 300, rate: 15 }
-                    ],
-                    children: []
-                },
-                'B': {
-                    id: 'B',
-                    name: 'Indicado Direto B',
-                    uid: 'UID-B001',
-                    refCode: 'REF-B001',
-                    email: 'b@bitradex.com',
-                    phone: '+351 912 000 001',
-                    custodias: [{ id: 'cb1', label: 'Banca Standard', value: 4992, rate: 15 }],
-                    children: ['B1', 'B2']
-                },
-                'C': {
-                    id: 'C',
-                    name: 'Indicado Direto C',
-                    uid: 'UID-C001',
-                    refCode: 'REF-C001',
-                    email: 'c@bitradex.com',
-                    phone: '+351 912 000 002',
-                    custodias: [{ id: 'cc1', label: 'Banca Standard', value: 611, rate: 15 }],
-                    children: []
-                },
-                'D': {
-                    id: 'D',
-                    name: 'Indicado Direto D',
-                    uid: 'UID-D001',
-                    refCode: 'REF-D001',
-                    email: 'd@bitradex.com',
-                    phone: '+351 912 000 003',
-                    custodias: [{ id: 'cd1', label: 'Banca Standard', value: 104, rate: 15 }],
-                    children: []
-                },
-                'E': {
-                    id: 'E',
-                    name: 'Indicado Direto E',
-                    uid: 'UID-E001',
-                    refCode: 'REF-E001',
-                    email: 'e@bitradex.com',
-                    phone: '+351 912 000 004',
-                    custodias: [{ id: 'ce1', label: 'Banca Standard', value: 100, rate: 15 }],
-                    children: []
-                },
-                'F': {
-                    id: 'F',
-                    name: 'Indicado Direto F',
-                    uid: 'UID-F001',
-                    refCode: 'REF-F001',
-                    email: 'f@bitradex.com',
-                    phone: '+351 912 000 005',
-                    custodias: [{ id: 'cf1', label: 'Banca Standard', value: 713, rate: 15 }],
-                    children: []
-                },
-                'B1': {
-                    id: 'B1',
-                    name: 'Indicado B1',
-                    uid: 'UID-B101',
-                    refCode: 'REF-B101',
-                    email: 'b1@bitradex.com',
-                    phone: '+351 912 100 001',
-                    custodias: [{ id: 'cb1_1', label: 'Banca Standard', value: 1366, rate: 15 }],
-                    children: ['B1_deep']
-                },
-                'B2': {
-                    id: 'B2',
-                    name: 'Indicado B2',
-                    uid: 'UID-B201',
-                    refCode: 'REF-B201',
-                    email: 'b2@bitradex.com',
-                    phone: '+351 912 100 002',
-                    custodias: [{ id: 'cb2_1', label: 'Banca Standard', value: 648, rate: 15 }],
-                    children: []
-                },
-                'B1_deep': {
-                    id: 'B1_deep',
-                    name: 'Profundidade B1 (N4)',
-                    uid: 'UID-B1D1',
-                    refCode: 'REF-B1D1',
-                    email: 'b1deep@bitradex.com',
-                    phone: '+351 912 100 003',
-                    custodias: [{ id: 'cb1d_1', label: 'Banca Standard', value: 108, rate: 15 }],
-                    children: []
-                }
-            };
         };
 
         const TreeMemberCard = ({ memberId, network, stats, onEdit, onAddSub, onRemove, currentUserId }) => {
@@ -289,7 +152,6 @@
                             <div className="flex justify-between"><span>2º Nível (Indiretos):</span><span className="font-bold text-blue-400">{memberStats.level2}</span></div>
                             <div className="flex justify-between"><span>3º Nível+ (Profundidade):</span><span className="font-bold text-indigo-300">{memberStats.level3Plus}</span></div>
                             
-                            {/* Campos recuperados de visualização de contato */}
                             {member.email && (
                                 <div className="flex justify-between border-t border-slate-800/40 pt-1 mt-1">
                                     <span>E-mail:</span>
@@ -372,6 +234,22 @@
             const showNotification = (msg) => {
                 setToast({ show: true, message: msg });
                 setTimeout(() => setToast({ show: false, message: '' }), 4000);
+            };
+
+            const copyToClipboard = (text) => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showNotification("UID copiado para a área de transferência!");
+                } catch (err) {
+                    console.error('Falha ao copiar:', err);
+                    showNotification("Falha ao copiar automaticamente. Selecione e copie manualmente.");
+                }
+                document.body.removeChild(textarea);
             };
 
             useEffect(() => {
@@ -458,7 +336,7 @@
                 const { error } = await getSupabase().auth.signUp({ email, password });
                 setLoading(false);
                 if (error) setAuthError(error.message);
-                else showNotification("Registo efetuado! Pode entrar.");
+                else showNotification("Registo efetuado com sucesso! Já pode iniciar sessão.");
             };
 
             const handleSignIn = async (e) => {
@@ -471,13 +349,15 @@
             };
 
             const conectarAoPatriarca = async () => {
-                if (!uplineSearch.trim()) return showNotification("Introduza o UID, Ref Code ou E-mail do seu Patriarca.");
+                const uidLimpo = uplineSearch.trim().toUpperCase();
+                if (!uidLimpo) return showNotification("Introduza o UID exato do seu Patriarca para conectar.");
+                
                 setLoading(true);
                 const client = getSupabase();
                 
                 const { data, error } = await client.rpc('conectar_rede_patriarca', {
                     novo_membro_id: session.user.id,
-                    termo_busca_patriarca: uplineSearch.trim()
+                    termo_busca_patriarca: uidLimpo
                 });
 
                 setLoading(false);
@@ -487,7 +367,7 @@
                     showNotification("🚀 " + data.mensagem);
                     fetchNetwork();
                 } else {
-                    showNotification("⚠️ " + (data?.mensagem || "Líder não encontrado."));
+                    showNotification("⚠️ " + (data?.mensagem || "Líder não localizado no sistema."));
                 }
             };
 
@@ -626,12 +506,14 @@
                 const client = getSupabase();
                 let updatedNetwork = { ...network };
 
+                const finalUid = (form.uid || `UID-${Date.now().toString().slice(-4)}`).trim().toUpperCase();
+
                 if (modalMode === 'add') {
                     const newId = `node_${Date.now()}`;
                     const newNode = {
                         id: newId, 
                         name: form.name, 
-                        uid: form.uid || `UID-${Date.now().toString().slice(-4)}`,
+                        uid: finalUid,
                         ref_code: form.refCode, 
                         email: form.email, 
                         phone: form.phone,
@@ -654,7 +536,7 @@
                     updatedNetwork[selectedMemberId] = { 
                         ...updatedNetwork[selectedMemberId], 
                         name: form.name, 
-                        uid: form.uid, 
+                        uid: finalUid, 
                         refCode: form.refCode, 
                         email: form.email, 
                         phone: form.phone, 
@@ -664,25 +546,25 @@
                     try {
                         await client.from('simulador_rede').update({ 
                             name: form.name, 
-                            uid: form.uid, 
+                            uid: finalUid, 
                             ref_code: form.refCode, 
                             email: form.email, 
                             phone: form.phone, 
                             custodias: formCustodias 
                         }).eq('id', selectedMemberId);
-                        showNotification("Dados atualizados na rede!");
+                        showNotification("Dados atualizados com sucesso!");
                     } catch (e) { showNotification("Atualizado localmente. Falha ao enviar para a nuvem."); }
                 }
                 setShowModal(false);
             };
 
             const handleRemoveMember = (id) => {
-                if (id === session.user.id) return showNotification("Ação bloqueada. Não pode remover o seu próprio nó primário daqui.");
-                if (network[id].userId !== session.user.id) return showNotification("Sem permissão. Este nó pertence a uma conta SaaS independente.");
+                if (id === session.user.id) return showNotification("Ação bloqueada. Não pode remover o seu próprio nó primário.");
+                if (network[id].userId !== session.user.id) return showNotification("Sem permissão. Este nó pertence a um parceiro SaaS independente.");
 
                 setConfirmModal({
-                    show: true, title: "Excluir Nó e Downlines",
-                    message: `Eliminar "${network[id]?.name}"? Esta ação removerá definitivamente toda a ramificação.`,
+                    show: true, title: "Excluir Nó e Ramificação",
+                    message: `Tem a certeza que deseja eliminar "${network[id]?.name}"? Esta ação removerá definitivamente toda a ramificação subsequente da nuvem.`,
                     action: async () => {
                         let updatedNetwork = { ...network };
                         let parentId = Object.keys(updatedNetwork).find(k => updatedNetwork[k].children.includes(id));
@@ -704,8 +586,8 @@
                         try {
                             if (parentId) await client.from('simulador_rede').update({ children: updatedNetwork[parentId].children }).eq('id', parentId);
                             await client.from('simulador_rede').delete().in('id', deletedIds).eq('user_id', session.user.id);
-                            showNotification("Nó e ramificação removidos globalmente.");
-                        } catch (e) { showNotification("Erro ao excluir do banco de dados."); }
+                            showNotification("Nó e ramificação removidos com sucesso.");
+                        } catch (e) { showNotification("Erro ao excluir dados da nuvem."); }
                     }
                 });
             };
@@ -718,7 +600,7 @@
             };
 
             const openEditModal = (id) => {
-                if (network[id].userId !== session.user.id) return showNotification("Não pode editar as finanças de um utilizador SaaS independente.");
+                if (network[id].userId !== session.user.id) return showNotification("Não pode gerenciar finanças de um utilizador independente.");
                 setModalMode('edit'); setSelectedMemberId(id);
                 const m = network[id];
                 setForm({ 
@@ -761,7 +643,7 @@
                                 <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg text-sm">{authMode === 'login' ? 'Iniciar Sessão' : 'Criar Conta'}</button>
                             </form>
                             <div className="text-center text-xs">
-                                <button type="button" onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="text-indigo-400 hover:underline">{authMode === 'login' ? 'Nova conta? Registe-se' : 'Já tem conta? Faça login'}</button>
+                                <button type="button" onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="text-indigo-400 hover:underline">{authMode === 'login' ? 'Não tem conta? Registe-se' : 'Já tem conta? Faça login'}</button>
                             </div>
                         </div>
                     </div>
@@ -772,7 +654,7 @@
                 return (
                     <div className="flex-1 flex flex-col items-center justify-center bg-[#05070e] text-gray-400 space-y-4">
                         <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-sm font-semibold tracking-wide">A carregar Rede Global...</p>
+                        <p className="text-sm font-semibold tracking-wide">A carregar a rede global...</p>
                     </div>
                 );
             }
@@ -785,12 +667,12 @@
                         <div className="flex items-center gap-3">
                             <span className="p-2.5 bg-gradient-to-r from-emerald-500 to-indigo-600 rounded-xl text-white font-extrabold text-lg tracking-wider shadow-lg shadow-indigo-950/40">BX</span>
                             <div>
-                                <h1 className="text-lg font-black tracking-tight text-white flex items-center gap-2">Painel Bitradex <span className="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">Global</span></h1>
+                                <h1 className="text-lg font-black tracking-tight text-white flex items-center gap-2">Painel Bitradex <span className="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-extrabold">SaaS Pro</span></h1>
                                 <p className="text-xs text-gray-400 font-medium">Conta de Rede Isolada: {session.user.email}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button onClick={() => getSupabase().auth.signOut()} className="bg-slate-800 hover:bg-slate-700 text-gray-300 text-xs font-bold px-4 py-2 rounded-xl transition-all">Sair</button>
+                            <button onClick={() => getSupabase().auth.signOut()} className="bg-slate-800 hover:bg-slate-700 text-gray-300 text-xs font-bold px-4 py-2 rounded-xl transition-all">Sair da Conta</button>
                         </div>
                     </header>
 
@@ -811,22 +693,43 @@
 
                             {activeTab === 'dashboard' && (
                                 <div className="space-y-6">
-                                    {/* MÓDULO DE INTERLIGAÇÃO (Se não tiver um Patriarca) */}
+                                    {me && (
+                                        <div className="bg-[#0b0e1a] border border-indigo-900/40 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                            <div>
+                                                <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest">O Seu UID de Indicação</h3>
+                                                <p className="text-xs text-gray-400 mt-1">Partilhe este UID exato para novos indicados conectarem-se diretamente a si:</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 w-full md:w-auto">
+                                                <span className="bg-slate-950 border border-slate-800 text-white font-mono font-bold px-4 py-2 rounded-xl text-sm select-all">
+                                                    {me.uid}
+                                                </span>
+                                                <button 
+                                                    onClick={() => copyToClipboard(me.uid)}
+                                                    className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-95"
+                                                >
+                                                    Copiar UID
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {me && !me.patriarca_id && (
                                         <div className="bg-gradient-to-r from-[#111827] to-[#0f152e] border border-blue-900/50 p-6 rounded-2xl relative shadow-xl overflow-hidden">
                                             <div className="absolute -right-10 -top-10 opacity-10"><Icons.Link className="w-40 h-40" /></div>
-                                            <h3 className="text-md font-bold text-blue-400 mb-2 flex items-center gap-2"><Icons.Link /> Ligar ao Patriarca (Upline)</h3>
-                                            <p className="text-xs text-gray-400 mb-4 max-w-lg">A sua conta é independente. Para se juntar à equipa de um líder e permitir que ele visualize o seu volume de rede, conecte-se abaixo inserindo o UID, Ref Code ou E-mail dele.</p>
+                                            <h3 className="text-md font-bold text-blue-400 mb-2 flex items-center gap-2"><Icons.Link /> Ligar ao Patriarca via UID</h3>
+                                            <p className="text-xs text-gray-400 mb-4 max-w-lg">
+                                                A sua conta atualmente é independente. Para se associar à equipe de um líder e permitir a qualificação de carreira, insira o **UID exato** do seu Patriarca abaixo.
+                                            </p>
                                             
                                             <div className="flex gap-2">
                                                 <input 
                                                     type="text" 
                                                     value={uplineSearch} 
                                                     onChange={(e) => setUplineSearch(e.target.value)} 
-                                                    placeholder="Ex: UID-MASTER ou lider@email.com" 
-                                                    className="w-full max-w-xs bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500"
+                                                    placeholder="Ex: UID-XXXXXX" 
+                                                    className="w-full max-w-xs bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-gray-200 uppercase font-mono tracking-wider focus:outline-none focus:border-blue-500"
                                                 />
-                                                <button onClick={conectarAoPatriarca} className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all shadow-lg">Conectar à Rede</button>
+                                                <button onClick={conectarAoPatriarca} className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all shadow-lg font-bold">Vincular Redes</button>
                                             </div>
                                         </div>
                                     )}
@@ -836,8 +739,8 @@
                                             <div className="flex items-center gap-3">
                                                 <span className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><Icons.Check /></span>
                                                 <div>
-                                                    <h3 className="text-xs font-bold text-emerald-400">Rede Global Conectada</h3>
-                                                    <p className="text-[10px] text-gray-500">O seu nó está corretamente pendurado numa árvore Patriarca.</p>
+                                                    <h3 className="text-xs font-bold text-emerald-400">Vinculado ao Patriarca</h3>
+                                                    <p className="text-[10px] text-gray-500 font-medium">O seu nó e volume sobem corretamente para a equipe superior na hierarquia.</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -884,8 +787,8 @@
                                 <div className="space-y-4">
                                     <div className="flex flex-col md:flex-row justify-between bg-[#0b0e1a] p-4 border border-[#161f35] rounded-2xl gap-4">
                                         <div>
-                                            <h3 className="text-sm font-bold text-gray-300">A Sua Ramificação</h3>
-                                            <p className="text-[10px] text-gray-500 mt-0.5">Visão isolada e segura. As linhas paralelas do seu Patriarca não são visíveis aqui.</p>
+                                            <h3 className="text-sm font-bold text-gray-300">A Sua Equipa</h3>
+                                            <p className="text-[10px] text-gray-500 mt-0.5">Visão isolada e segura do seu ecossistema. Outras linhas paralelas não são visíveis aqui.</p>
                                         </div>
                                         <div className="bg-slate-950 p-1 rounded-xl flex border border-slate-800">
                                             <button onClick={() => setViewMode('table')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'text-gray-400'}`}>Tabela CRM</button>
@@ -924,19 +827,16 @@
                                                                 <td className="p-3 whitespace-nowrap" style={{ paddingLeft: `${indent * 20 + 12}px` }}>
                                                                     <div className="flex items-center text-xs font-bold text-gray-200">
                                                                         <span className={`w-1.5 h-1.5 rounded-full mr-2 ${isRoot ? 'bg-indigo-500' : (isIndependent ? 'bg-emerald-500' : 'bg-gray-500')}`}></span>
-                                                                        {user.name} {isIndependent && <span className="ml-2 text-[8px] bg-emerald-900/40 text-emerald-400 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">SaaS Próprio</span>}
+                                                                        {user.name} {isIndependent && <span className="ml-2 text-[8px] bg-emerald-900/40 text-emerald-400 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">Parceiro</span>}
                                                                     </div>
                                                                     <div className="text-[9px] text-gray-500 ml-3.5 mt-0.5 font-medium">UID: {user.uid} | Ref: {user.refCode}</div>
                                                                 </td>
                                                                 <td className="p-3 text-xs font-bold text-gray-200">${getPersonalSum(user).toLocaleString()}</td>
                                                                 <td className="p-3 text-xs text-right font-mono text-blue-400 font-bold">${userStats.teamVol.toLocaleString()}</td>
-                                                                
-                                                                {/* Informações de contato recuperadas na Tabela CRM */}
                                                                 <td className="p-3 text-xs text-gray-300">
                                                                     <div className="truncate max-w-[150px] font-medium" title={user.email}>{user.email || 'N/D'}</div>
                                                                     <div className="text-[10px] text-gray-500 mt-0.5">{user.phone || 'N/D'}</div>
                                                                 </td>
-
                                                                 <td className="p-3 text-[10px] text-center whitespace-nowrap font-mono text-gray-400">{userStats.level1} / {userStats.level2} / {userStats.level3Plus}</td>
                                                                 <td className="p-3 text-center"><span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-600/20 text-indigo-400">{userStats.vipLabel}</span></td>
                                                                 <td className="p-3 text-right">
@@ -984,7 +884,7 @@
                                     </div>
                                     <div className="grid grid-cols-2 gap-4 text-center font-mono">
                                         <div className="bg-[#0a1d37] border border-blue-900/60 p-5 rounded-2xl">
-                                            <p className="text-[10px] text-gray-400 uppercase font-bold mb-2">Lucro Custódias (Diário)</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold mb-2">Lucro Pessoal (Diário)</p>
                                             <p className="text-2xl font-black text-emerald-400">${earnings.personalDaily.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                                         </div>
                                         <div className="bg-slate-950 border border-slate-900 p-5 rounded-2xl">
@@ -993,7 +893,7 @@
                                         </div>
                                     </div>
                                     <div className="bg-gradient-to-r from-indigo-950 to-[#0e172a] p-6 rounded-2xl border border-indigo-900/40 text-center font-mono">
-                                        <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2">Estimativa Mensal (30 dias)</p>
+                                        <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2">Estimativa Mensal Acumulada</p>
                                         <p className="text-4xl font-black text-emerald-400">${earnings.totalMonthly.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                                     </div>
                                 </div>
@@ -1001,7 +901,6 @@
                         </div>
                     </main>
 
-                    {/* MODAL DE CADASTRAR / EDITAR - RECONSOLIDADO COM TODOS OS CAMPOS */}
                     {showModal && (
                         <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
                             <div className="bg-[#0b0e1a] border border-[#1c273e] rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
@@ -1018,11 +917,9 @@
                                         <input type="text" value={form.refCode} onChange={e => setForm({...form, refCode: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" />
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Código UID</label>
-                                        <input type="text" value={form.uid} onChange={e => setForm({...form, uid: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" />
+                                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Código UID * (Estrito)</label>
+                                        <input type="text" value={form.uid} onChange={e => setForm({...form, uid: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500 font-mono uppercase" placeholder="UID-XXXXXX" />
                                     </div>
-                                    
-                                    {/* Campos de contacto resgatados de forma estrita */}
                                     <div>
                                         <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">E-mail de Contacto</label>
                                         <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" placeholder="exemplo@email.com" />
