@@ -210,9 +210,11 @@ const TreeCard = ({ memberId, network, stats, onEdit, onAddSub, onRemove, rootId
             <div className={`p-4 rounded-2xl border text-left min-w-[220px] max-w-[260px] shadow-2xl relative transition-all duration-300 hover:scale-105 z-20
                 ${isUpline
                     ? 'bg-gradient-to-b from-[#1b1c24] to-[#0d0e12] border-yellow-600/50 opacity-80'
-                    : isRoot
-                        ? 'bg-gradient-to-b from-[#0a182d] to-[#040914] border-indigo-500/80 shadow-indigo-950/40'
-                        : 'bg-[#0e1222] border-slate-800 shadow-black/40'}`}>
+                    : member._isDownlineUser
+                        ? 'bg-gradient-to-b from-[#0d1a0d] to-[#060e06] border-emerald-700/60 shadow-emerald-950/30'
+                        : isRoot
+                            ? 'bg-gradient-to-b from-[#0a182d] to-[#040914] border-indigo-500/80 shadow-indigo-950/40'
+                            : 'bg-[#0e1222] border-slate-800 shadow-black/40'}`}>
 
                 {hasChildren && !isUpline && (
                     <button onClick={e => { e.stopPropagation(); setCollapsed(!collapsed); }}
@@ -226,7 +228,7 @@ const TreeCard = ({ memberId, network, stats, onEdit, onAddSub, onRemove, rootId
                         ${memberStats.level === 'Membro' ? 'bg-slate-800 text-gray-400' : 'bg-gradient-to-r from-indigo-500 to-[#4f46e5] text-white'}`}>
                         {memberStats.vipLabel}
                     </span>
-                    {!isUpline && (
+                    {!isUpline && !member._isDownlineUser && (
                         <div className="flex gap-1">
                             <button onClick={e => { e.stopPropagation(); onEdit(memberId); }}
                                 className="text-[10px] bg-slate-800/80 hover:bg-slate-700 p-1 rounded transition-colors" title="Editar">✏️</button>
@@ -238,7 +240,7 @@ const TreeCard = ({ memberId, network, stats, onEdit, onAddSub, onRemove, rootId
                             )}
                         </div>
                     )}
-                    {isUpline && <span className="text-[8px] bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded font-black uppercase">Upline</span>}
+                    {member._isDownlineUser && <span className="text-[8px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded font-black uppercase">Rede</span>}
                 </div>
 
                 <h4 className="text-xs font-bold text-gray-100 truncate mt-1">{member.name}</h4>
@@ -420,8 +422,80 @@ const App = () => {
             await loadUplineIntoNetwork(net, profile.upline_ref);
         }
 
+        // Carrega downlines — usuários que declararam este usuário como upline
+        if (profile.uid) {
+            await loadDownlinesIntoNetwork(net, profile.uid);
+        }
+
         setNetwork(net);
         setAppLoading(false);
+    };
+
+    // Busca todos os usuários que têm este usuário como upline e injeta as redes deles
+    const loadDownlinesIntoNetwork = async (net, myUid) => {
+        // Busca perfis que apontam para meu UID como upline
+        const { data: downlineProfiles } = await sb().from('user_profiles')
+            .select('user_id, display_name, uid, email')
+            .eq('upline_ref', myUid);
+
+        if (!downlineProfiles || downlineProfiles.length === 0) return;
+
+        for (const dp of downlineProfiles) {
+            // Busca o nó raiz da rede deste downline
+            const { data: downlineRoot } = await sb().from('rede_membros')
+                .select('*')
+                .eq('owner_id', dp.user_id)
+                .eq('member_id', 'root')
+                .single();
+
+            if (!downlineRoot) continue;
+
+            // Cria um nó representando o downline como filho do root local
+            const downlineNodeId = 'dl_' + dp.user_id.slice(0, 8);
+            net[downlineNodeId] = {
+                id: downlineNodeId,
+                name: dp.display_name + ' ★',
+                uid: dp.uid,
+                refCode: dp.uid,
+                email: dp.email,
+                phone: '',
+                custodias: downlineRoot.custodias || [],
+                children: [],
+                _isDownlineUser: true,
+                _ownerId: dp.user_id,
+            };
+
+            // Busca membros da rede do downline para mostrar abaixo dele
+            const { data: downlineMembers } = await sb().from('rede_membros')
+                .select('*')
+                .eq('owner_id', dp.user_id)
+                .neq('member_id', 'root');
+
+            if (downlineMembers && downlineMembers.length > 0) {
+                downlineMembers.forEach(row => {
+                    const nodeId = 'dl_' + dp.user_id.slice(0, 8) + '_' + row.member_id;
+                    net[nodeId] = {
+                        id: nodeId,
+                        name: row.name,
+                        uid: row.uid,
+                        refCode: row.ref_code,
+                        email: row.email || '',
+                        phone: row.phone || '',
+                        custodias: row.custodias || [],
+                        children: (row.children || []).map(c => 'dl_' + dp.user_id.slice(0, 8) + '_' + c),
+                        _isDownlineUser: true,
+                    };
+                });
+
+                // Reconstrói children do nó raiz do downline
+                net[downlineNodeId].children = (downlineRoot.children || []).map(c => 'dl_' + dp.user_id.slice(0, 8) + '_' + c);
+            }
+
+            // Adiciona o downline como filho do root do patriarca
+            if (net['root'] && !net['root'].children.includes(downlineNodeId)) {
+                net['root'] = { ...net['root'], children: [...(net['root'].children || []), downlineNodeId] };
+            }
+        }
     };
 
     const loadUplineIntoNetwork = async (net, uplineUid) => {
