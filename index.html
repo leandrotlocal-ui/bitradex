@@ -76,6 +76,84 @@ const Ico = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENTE: LANDING PAGE
+// ═══════════════════════════════════════════════════════════════════════════════
+const LandingScreen = ({ showLanding, onEnter, onAuth }) => {
+    const [showAuth, setShowAuth] = useState(!showLanding);
+
+    const handleEnter = () => {
+        setShowAuth(true);
+        onEnter();
+    };
+
+    if (showAuth) return <AuthScreen onAuth={onAuth} />;
+
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#03050a] relative overflow-hidden p-4">
+            {/* Fundo com gradientes */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-900/20 blur-[120px]"></div>
+                <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-emerald-900/20 blur-[120px]"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-indigo-950/30 blur-[150px]"></div>
+            </div>
+
+            {/* Conteúdo */}
+            <div className="relative z-10 flex flex-col items-center text-center max-w-lg w-full">
+
+                {/* Logo */}
+                <div className="mb-8">
+                    <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-emerald-400 via-indigo-500 to-indigo-700 rounded-3xl shadow-2xl shadow-indigo-900/50 mb-6">
+                        <span className="text-white font-black text-4xl tracking-tight">BX</span>
+                    </div>
+                    <h1 className="text-5xl font-black text-white tracking-tight mb-2">Bitradex</h1>
+                    <p className="text-indigo-400 font-semibold text-sm tracking-widest uppercase">Network Management</p>
+                </div>
+
+                {/* Tagline */}
+                <p className="text-gray-400 text-base leading-relaxed mb-12 max-w-sm">
+                    Gerencie sua rede, acompanhe sua evolução e conquiste novos níveis VIP.
+                </p>
+
+                {/* Botão principal */}
+                <div className="w-full max-w-xs space-y-4">
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-2">Selecione a rede</p>
+
+                    <button onClick={handleEnter}
+                        className="w-full group relative flex items-center justify-between bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold px-6 py-4 rounded-2xl shadow-xl shadow-indigo-950/50 transition-all duration-200 hover:scale-105 hover:shadow-indigo-900/60">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center font-black text-lg">BX</div>
+                            <div className="text-left">
+                                <p className="text-sm font-black">Rede Bitradex</p>
+                                <p className="text-[10px] text-indigo-300 font-medium">AI Bot · VIP System · Network</p>
+                            </div>
+                        </div>
+                        <svg className="w-5 h-5 text-indigo-300 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+
+                    {/* Placeholder para futuras redes */}
+                    <div className="w-full flex items-center justify-between bg-[#0b0e1a] border border-dashed border-slate-800 text-gray-600 font-bold px-6 py-4 rounded-2xl cursor-not-allowed opacity-50">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-slate-600 font-black text-lg">+</div>
+                            <div className="text-left">
+                                <p className="text-sm font-black text-slate-600">Em breve</p>
+                                <p className="text-[10px] text-slate-700 font-medium">Outras redes disponíveis</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Rodapé */}
+                <p className="text-[10px] text-gray-700 mt-12 tracking-wide">
+                    Bitradex Network Management · v2.0
+                </p>
+            </div>
+        </div>
+    );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE: TELA DE AUTENTICAÇÃO
 // ═══════════════════════════════════════════════════════════════════════════════
 const AuthScreen = ({ onAuth }) => {
@@ -295,6 +373,7 @@ const App = () => {
     const [authUser, setAuthUser] = useState(null);
     const [authLoading, setAuthLoading] = useState(true);
     const [profile, setProfile] = useState(null);
+    const [showLanding, setShowLanding] = useState(true);
 
     // Rede e estado
     const [network, setNetwork] = useState({});
@@ -836,7 +915,7 @@ const App = () => {
         </div>
     );
 
-    if (!authUser) return <AuthScreen onAuth={u => setAuthUser(u)} />;
+    if (!authUser) return <LandingScreen showLanding={showLanding} onEnter={() => setShowLanding(false)} onAuth={u => setAuthUser(u)} />;
 
     if (appLoading || !profile) return (
         <div className="min-h-screen flex items-center justify-center bg-[#03050a]">
