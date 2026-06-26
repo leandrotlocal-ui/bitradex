@@ -234,6 +234,7 @@ const Ico = {
 const LandingScreen = ({ showLanding, onEnter, onAuth }) => {
     const [showAuth, setShowAuth] = useState(!showLanding);
     const { lang, t, setL } = useLang();
+    const [syncWarnings, setSyncWarnings] = useState([]);
 
     const handleEnter = () => { setShowAuth(true); onEnter(); };
 
@@ -459,10 +460,16 @@ const TreeCard = ({ memberId, network, stats, onEdit, onAddSub, onRemove, rootId
                         </div>
                     )}
                     {member._isDownlineUser && <span className="text-[8px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded font-black uppercase">Rede</span>}
+                    {member._isLinked && !member._isDownlineUser && <span className="text-[8px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-black uppercase">✓ Sync</span>}
                 </div>
 
                 <h4 className="text-xs font-bold text-gray-100 truncate mt-1">{member.name}</h4>
-                <p className="text-[9px] text-slate-500 font-mono mt-0.5">UID: {member.uid}</p>
+                <p className="text-[9px] text-slate-500 font-mono mt-0.5">
+                    UID: {member.uid}
+                    {(!member.uid || member.uid.startsWith('UID-')) && !member._isUpline && (
+                        <span className="ml-1 text-amber-500" title="UID da Bitradex não informado">⚠️</span>
+                    )}
+                </p>
                 {!isUpline && <p className="text-[8px] text-indigo-400 font-mono font-bold">REF: {member.refCode}</p>}
 
                 <div className="mt-2.5 pt-2 border-t border-slate-800/60 space-y-1 text-[9px] text-slate-400 bg-slate-950/50 p-2 rounded-lg">
@@ -515,6 +522,7 @@ const App = () => {
     const [profile, setProfile] = useState(null);
     const [showLanding, setShowLanding] = useState(true);
     const { lang, t, setL } = useLang();
+    const [syncWarnings, setSyncWarnings] = useState([]);
 
     // Rede e estado
     const [network, setNetwork] = useState({});
@@ -594,6 +602,7 @@ const App = () => {
     }, [profile]);
 
     // ── Carregar rede ─────────────────────────────────────────────────────────
+    // ── Carrega rede completa com sincronização recursiva por UID ───────────────
     const loadNetwork = async () => {
         setAppLoading(true);
         const { data, error } = await sb().from('rede_membros')
@@ -619,41 +628,148 @@ const App = () => {
                     phone: row.phone || '',
                     custodias: row.custodias || [{ id: 'c_mig', label: 'Custódia', value: parseFloat(row.personal)||0, rate: 15 }],
                     children: row.children || [],
+                    linked_user_id: row.linked_user_id || null,
                 };
             });
         } else {
-            // Rede vazia — cria nó raiz para o usuário
             const rootNode = {
                 id: 'root',
                 name: profile.display_name || 'Você',
-                uid: 'UID-' + authUser.id.slice(0, 6).toUpperCase(),
+                uid: profile.uid || authUser.id.slice(0, 6).toUpperCase(),
                 refCode: profile.ref_code,
                 email: profile.email,
                 phone: '',
                 custodias: [{ id: 'c_root_1', label: 'Custódia Principal', value: 0, rate: 15 }],
                 children: [],
+                linked_user_id: authUser.id,
             };
             net['root'] = rootNode;
             await saveMemberToDb({ ...rootNode, owner_id: authUser.id, member_id: 'root', personal: 0 });
         }
+
+        // Coleta avisos de nós sem UID real
+        const warnings = [];
+        Object.values(net).forEach(n => {
+            if (!n._isUpline && n.id !== 'root') {
+                if (!n.uid || n.uid.startsWith('UID-')) {
+                    warnings.push({ name: n.name, id: n.id, reason: 'no_uid' });
+                }
+            }
+        });
+        setSyncWarnings(warnings);
+
+        // Garante que o nó root do próprio usuário tem o linked_user_id correto
+        if (net['root'] && !net['root'].linked_user_id) {
+            net['root'].linked_user_id = authUser.id;
+            await sb().from('rede_membros')
+                .update({ linked_user_id: authUser.id })
+                .eq('owner_id', authUser.id)
+                .eq('member_id', 'root');
+        }
+
+        // Sincroniza recursivamente todos os nós que têm linked_user_id
+        const visitedOwners = new Set([authUser.id]);
+        await syncLinkedNodes(net, visitedOwners);
 
         // Carrega upline se estiver configurado
         if (profile.upline_ref && showUpline) {
             await loadUplineIntoNetwork(net, profile.upline_ref);
         }
 
-        // Carrega downlines — usuários que declararam este usuário como upline
+        // Carrega downlines via upline_ref
         if (profile.uid) {
-            await loadDownlinesIntoNetwork(net, profile.uid);
+            await loadDownlinesIntoNetwork(net, profile.uid, visitedOwners);
         }
 
         setNetwork(net);
         setAppLoading(false);
     };
 
-    // Busca todos os usuários que têm este usuário como upline e injeta as redes deles
-    const loadDownlinesIntoNetwork = async (net, myUid) => {
-        // Busca perfis que apontam para meu UID como upline
+    // Percorre todos os nós com linked_user_id e injeta a rede real deles
+    const syncLinkedNodes = async (net, visitedOwners) => {
+        const linkedIds = Object.values(net)
+            .filter(n => n.linked_user_id && !visitedOwners.has(n.linked_user_id))
+            .map(n => ({ nodeId: n.id, ownerId: n.linked_user_id }));
+
+        for (const { nodeId, ownerId } of linkedIds) {
+            if (visitedOwners.has(ownerId)) continue;
+            visitedOwners.add(ownerId);
+
+            // Busca toda a rede do usuário vinculado
+            const { data: linkedData } = await sb().from('rede_membros')
+                .select('*')
+                .eq('owner_id', ownerId);
+
+            if (!linkedData || linkedData.length === 0) continue;
+
+            const prefix = 'lnk_' + ownerId.slice(0, 8) + '_';
+            const rootRow = linkedData.find(r => r.member_id === 'root');
+
+            // Atualiza o nó existente com dados reais da conta vinculada
+            if (rootRow && net[nodeId]) {
+                net[nodeId] = {
+                    ...net[nodeId],
+                    custodias: rootRow.custodias?.length > 0 ? rootRow.custodias : net[nodeId].custodias,
+                    _linkedOwnerId: ownerId,
+                    _isLinked: true,
+                };
+
+                // Injeta os filhos reais do usuário vinculado
+                const realChildren = (rootRow.children || []).map(c => prefix + c);
+
+                // Mescla filhos existentes (manuais) com filhos reais — sem duplicar por UID
+                const existingChildUids = (net[nodeId].children || [])
+                    .map(cid => net[cid]?.uid)
+                    .filter(Boolean);
+
+                linkedData.filter(r => r.member_id !== 'root').forEach(row => {
+                    const nid = prefix + row.member_id;
+                    // Evita duplicar: se já existe um nó manual com o mesmo UID, usa-o
+                    const existingNode = Object.values(net).find(n =>
+                        n.uid === row.uid && n.id !== nid && !n._isLinked
+                    );
+                    if (existingNode) {
+                        // Atualiza o nó manual com dados reais
+                        net[existingNode.id] = {
+                            ...existingNode,
+                            custodias: row.custodias?.length > 0 ? row.custodias : existingNode.custodias,
+                            linked_user_id: row.linked_user_id || null,
+                            _isLinked: !!row.linked_user_id,
+                            _linkedOwnerId: row.linked_user_id,
+                        };
+                    } else {
+                        net[nid] = {
+                            id: nid,
+                            name: row.name,
+                            uid: row.uid,
+                            refCode: row.ref_code,
+                            email: row.email || '',
+                            phone: row.phone || '',
+                            custodias: row.custodias || [],
+                            children: (row.children || []).map(c => prefix + c),
+                            linked_user_id: row.linked_user_id || null,
+                            _isLinked: !!row.linked_user_id,
+                            _linkedOwnerId: row.linked_user_id,
+                            _isDownlineUser: true,
+                        };
+                    }
+                });
+
+                // Combina children manuais + reais sem duplicar por UID
+                const manualChildren = (net[nodeId].children || []).filter(cid => {
+                    const uid = net[cid]?.uid;
+                    return !realChildren.some(rc => net[rc]?.uid === uid);
+                });
+                net[nodeId].children = [...new Set([...manualChildren, ...realChildren])];
+            }
+
+            // Recursão — sincroniza nós filhos que também têm linked_user_id
+            await syncLinkedNodes(net, visitedOwners);
+        }
+    };
+
+    // Busca downlines via upline_ref e injeta recursivamente
+    const loadDownlinesIntoNetwork = async (net, myUid, visitedOwners) => {
         const { data: downlineProfiles } = await sb().from('user_profiles')
             .select('user_id, display_name, uid, email')
             .eq('upline_ref', myUid);
@@ -661,59 +777,60 @@ const App = () => {
         if (!downlineProfiles || downlineProfiles.length === 0) return;
 
         for (const dp of downlineProfiles) {
-            // Busca o nó raiz da rede deste downline
-            const { data: downlineRoot } = await sb().from('rede_membros')
-                .select('*')
-                .eq('owner_id', dp.user_id)
-                .eq('member_id', 'root')
-                .single();
+            if (visitedOwners.has(dp.user_id)) continue;
 
-            if (!downlineRoot) continue;
+            // Verifica se já existe um nó manual com o UID deste downline
+            const existingNode = Object.values(net).find(n => n.uid === dp.uid && !n._isDownlineUser);
 
-            // Cria um nó representando o downline como filho do root local
-            const downlineNodeId = 'dl_' + dp.user_id.slice(0, 8);
-            net[downlineNodeId] = {
-                id: downlineNodeId,
-                name: dp.display_name + ' ★',
-                uid: dp.uid,
-                refCode: dp.uid,
-                email: dp.email,
-                phone: '',
-                custodias: downlineRoot.custodias || [],
-                children: [],
-                _isDownlineUser: true,
-                _ownerId: dp.user_id,
-            };
+            if (existingNode) {
+                // Vincula o nó existente à conta real
+                net[existingNode.id] = {
+                    ...net[existingNode.id],
+                    name: dp.display_name,
+                    email: dp.email,
+                    linked_user_id: dp.user_id,
+                    _isLinked: true,
+                    _linkedOwnerId: dp.user_id,
+                };
+                visitedOwners.add(dp.user_id);
+                await syncLinkedNodes(net, visitedOwners);
+            } else {
+                // Cria novo nó para o downline
+                const { data: downlineRoot } = await sb().from('rede_membros')
+                    .select('*')
+                    .eq('owner_id', dp.user_id)
+                    .eq('member_id', 'root')
+                    .single();
 
-            // Busca membros da rede do downline para mostrar abaixo dele
-            const { data: downlineMembers } = await sb().from('rede_membros')
-                .select('*')
-                .eq('owner_id', dp.user_id)
-                .neq('member_id', 'root');
+                if (!downlineRoot) continue;
 
-            if (downlineMembers && downlineMembers.length > 0) {
-                downlineMembers.forEach(row => {
-                    const nodeId = 'dl_' + dp.user_id.slice(0, 8) + '_' + row.member_id;
-                    net[nodeId] = {
-                        id: nodeId,
-                        name: row.name,
-                        uid: row.uid,
-                        refCode: row.ref_code,
-                        email: row.email || '',
-                        phone: row.phone || '',
-                        custodias: row.custodias || [],
-                        children: (row.children || []).map(c => 'dl_' + dp.user_id.slice(0, 8) + '_' + c),
-                        _isDownlineUser: true,
-                    };
-                });
+                const downlineNodeId = 'dl_' + dp.user_id.slice(0, 8);
+                net[downlineNodeId] = {
+                    id: downlineNodeId,
+                    name: dp.display_name + ' ★',
+                    uid: dp.uid,
+                    refCode: dp.uid,
+                    email: dp.email,
+                    phone: '',
+                    custodias: downlineRoot.custodias || [],
+                    children: [],
+                    linked_user_id: dp.user_id,
+                    _isLinked: true,
+                    _isDownlineUser: true,
+                    _linkedOwnerId: dp.user_id,
+                };
 
-                // Reconstrói children do nó raiz do downline
-                net[downlineNodeId].children = (downlineRoot.children || []).map(c => 'dl_' + dp.user_id.slice(0, 8) + '_' + c);
+                visitedOwners.add(dp.user_id);
+                await syncLinkedNodes(net, visitedOwners);
+
+                if (net['root'] && !net['root'].children.includes(downlineNodeId)) {
+                    net['root'] = { ...net['root'], children: [...(net['root'].children || []), downlineNodeId] };
+                }
             }
 
-            // Adiciona o downline como filho do root do patriarca
-            if (net['root'] && !net['root'].children.includes(downlineNodeId)) {
-                net['root'] = { ...net['root'], children: [...(net['root'].children || []), downlineNodeId] };
+            // Recursão — downlines dos downlines
+            if (dp.uid) {
+                await loadDownlinesIntoNetwork(net, dp.uid, visitedOwners);
             }
         }
     };
@@ -753,20 +870,34 @@ const App = () => {
     // ── Persistência no Supabase ──────────────────────────────────────────────
     const saveMemberToDb = async (memberData) => {
         const row = {
-            owner_id:  memberData.owner_id || authUser.id,
-            member_id: memberData.member_id || memberData.id,
-            name:      memberData.name,
-            uid:       memberData.uid,
-            ref_code:  memberData.refCode,
-            email:     memberData.email || '',
-            phone:     memberData.phone || '',
-            personal:  getPersonalSum(memberData),
-            custodias: memberData.custodias || [],
-            children:  memberData.children || [],
+            owner_id:       memberData.owner_id || authUser.id,
+            member_id:      memberData.member_id || memberData.id,
+            name:           memberData.name,
+            uid:            memberData.uid,
+            ref_code:       memberData.refCode,
+            email:          memberData.email || '',
+            phone:          memberData.phone || '',
+            personal:       getPersonalSum(memberData),
+            custodias:      memberData.custodias || [],
+            children:       memberData.children || [],
+            linked_user_id: memberData.linked_user_id || null,
         };
         const { error } = await sb().from('rede_membros').upsert(row, { onConflict: 'owner_id,member_id' });
         if (error) console.error('Erro ao salvar membro:', error);
         return !error;
+    };
+
+    // Ao salvar um membro, verifica se o UID coincide com uma conta real e vincula
+    const checkAndLinkMember = async (memberData) => {
+        if (!memberData.uid) return memberData;
+        const { data: profile } = await sb().from('user_profiles')
+            .select('user_id, display_name')
+            .eq('uid', memberData.uid)
+            .single();
+        if (profile && profile.user_id !== authUser.id) {
+            return { ...memberData, linked_user_id: profile.user_id, _isLinked: true };
+        }
+        return memberData;
     };
 
     const saveNetwork = async (updatedNetwork, changedIds = []) => {
@@ -949,24 +1080,33 @@ const App = () => {
         const updated = { ...network };
 
         if (modalMode === 'add') {
-            const newId = `m_${Date.now()}`;
-            updated[newId] = {
+            const newId = 'm_' + Date.now();
+            let newNode = {
                 id: newId,
                 name: form.name,
-                uid: form.uid || 'UID-' + Date.now().toString().slice(-6),
+                uid: form.uid || '',
                 refCode: form.refCode || 'REF-' + Date.now().toString().slice(-4),
                 email: form.email,
                 phone: form.phone,
                 custodias: formCustodias,
                 children: [],
+                linked_user_id: null,
             };
+            // Verifica se o UID coincide com uma conta real
+            newNode = await checkAndLinkMember(newNode);
+            updated[newId] = newNode;
             updated[selectedMemberId] = { ...updated[selectedMemberId], children: [...(updated[selectedMemberId].children || []), newId] };
             await saveNetwork(updated, [newId, selectedMemberId]);
             notify(t('m_added'), 'success');
+            // Se vinculou a uma conta real, recarrega a rede para mostrar dados sincronizados
+            if (newNode._isLinked) loadNetwork();
         } else {
-            updated[selectedMemberId] = { ...updated[selectedMemberId], name: form.name, uid: form.uid, refCode: form.refCode, email: form.email, phone: form.phone, custodias: formCustodias };
+            let updatedNode = { ...updated[selectedMemberId], name: form.name, uid: form.uid, refCode: form.refCode, email: form.email, phone: form.phone, custodias: formCustodias };
+            updatedNode = await checkAndLinkMember(updatedNode);
+            updated[selectedMemberId] = updatedNode;
             await saveNetwork(updated, [selectedMemberId]);
             notify(t('m_updated'), 'success');
+            if (updatedNode._isLinked) loadNetwork();
         }
         setShowMemberModal(false);
     };
@@ -1187,7 +1327,10 @@ const App = () => {
                                 <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
                                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Volume de Equipa</p>
                                     <p className="text-3xl font-extrabold text-blue-400 mt-2">{fmtUSD(stats[rootId]?.teamVol || 0, 0)}</p>
-                                    <p className="text-xs text-gray-500 mt-1">{(stats[rootId]?.level1||0) + (stats[rootId]?.level2||0) + (stats[rootId]?.level3Plus||0)} membros na rede</p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {(stats[rootId]?.level1||0) + (stats[rootId]?.level2||0) + (stats[rootId]?.level3Plus||0)} membros na rede
+                                        {syncWarnings.length > 0 && <span className="ml-2 text-amber-500 text-[10px]">⚠️ {syncWarnings.length} sem UID</span>}
+                                    </p>
                                 </div>
                                 <div className="bg-[#0b0e1a] border border-[#161f35] p-5 rounded-2xl">
                                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Aporte Individual</p>
@@ -1222,6 +1365,27 @@ const App = () => {
                     {/* ── TAB: MINHA REDE ── */}
                     {activeTab === 'network' && (
                         <div className="space-y-4">
+                            {syncWarnings.length > 0 && (
+                                <div className="bg-amber-950/30 border border-amber-800/40 rounded-2xl p-4 flex gap-3">
+                                    <span className="text-amber-500 text-lg mt-0.5">⚠️</span>
+                                    <div className="flex-1">
+                                        <p className="text-xs font-bold text-amber-400 mb-1">
+                                            {syncWarnings.length} membro(s) sem UID da Bitradex — sincronização parcial
+                                        </p>
+                                        <p className="text-[10px] text-amber-600 mb-2">
+                                            Edite cada membro e preencha o UID real da plataforma Bitradex para ativar a sincronização automática com a conta deles.
+                                        </p>
+                                        <div className="flex flex-wrap gap-1">
+                                            {syncWarnings.map(w => (
+                                                <button key={w.id} onClick={() => openEditModal(w.id)}
+                                                    className="text-[9px] bg-amber-900/30 hover:bg-amber-800/40 border border-amber-800/40 text-amber-400 px-2 py-1 rounded-lg font-bold transition-all">
+                                                    ✏️ {w.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             <div className="bg-[#0b0e1a] p-4 border border-[#161f35] rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                                 <div>
                                     <h3 className="text-sm font-bold text-gray-300">Estrutura da Rede</h3>
@@ -1264,7 +1428,11 @@ const App = () => {
                                                                     {u.name}
                                                                     {isRoot && <span className="text-[9px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full">Você</span>}
                                                                 </div>
-                                                                <div className="text-[9px] text-gray-500 ml-3.5 mt-0.5 font-mono">{u.refCode}</div>
+                                                                <div className="text-[9px] text-gray-500 ml-3.5 mt-0.5 font-mono flex items-center gap-1">
+                                                    {u.refCode}
+                                                    {u._isLinked && <span className="text-emerald-400 font-black">✓</span>}
+                                                    {(!u.uid || u.uid.startsWith('UID-')) && !isRoot && <span className="text-amber-500">⚠️</span>}
+                                                </div>
                                                             </td>
                                                             <td className="p-3 text-right text-xs font-bold text-gray-200">{fmtUSD(getPersonalSum(u),0)}</td>
                                                             <td className="p-3 text-right text-xs font-bold text-blue-400">{fmtUSD(us.teamVol,0)}</td>
