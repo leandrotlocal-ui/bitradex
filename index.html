@@ -54,6 +54,600 @@ const VIP_RULES = [
     { level: 'Membro', rate: 0, reqDirects: 0,  reqTeamVol: 0,        reqPersonal: 0,    prevVip: null   },
 ];
 
+
+// ─── INTERNACIONALIZAÇÃO (i18n) ───────────────────────────────────────────────
+const TRANSLATIONS = {
+  'pt': {
+    // Landing
+    landing_tagline: 'Gerencie sua rede, acompanhe sua evolução na Rede e construa linhas fortes.',
+    landing_select: 'Selecione a rede',
+    landing_network_name: 'Rede Bitradex',
+    landing_network_sub: 'AI Bot · VIP System · Network',
+    landing_coming_soon: 'Em breve',
+    landing_coming_sub: 'Outras redes disponíveis',
+    landing_footer: 'MyNetwork · Powered by Bitradex · v2.0',
+    // Auth
+    auth_enter: 'Entrar',
+    auth_register: 'Criar Conta',
+    auth_subtitle: 'Painel de Liderança · Rede Bitradex',
+    auth_name: 'Seu Nome Completo *',
+    auth_email: 'E-mail *',
+    auth_password: 'Senha *',
+    auth_password_hint: 'Mínimo 6 caracteres',
+    auth_uid: 'Seu UID Bitradex *',
+    auth_uid_hint: 'O UID numérico da sua conta na plataforma Bitradex.',
+    auth_upline: 'UID do seu Upline (opcional)',
+    auth_upline_hint: 'Se alguém te indicou, coloque o UID dele para conectar as redes.',
+    auth_btn_login: {tr('auth_btn_login')},
+    auth_btn_register: {tr('auth_btn_register')},
+    auth_loading: {tr('auth_loading')},
+    auth_success: tr('auth_success'),
+    auth_uid_required: tr('auth_uid_required'),
+    auth_name_required: tr('auth_name_required'),
+    auth_uid_taken: tr('auth_uid_taken'),
+    auth_footer: '{tr('auth_footer')}',
+    // Header
+    header_hello: 'Olá',
+    header_cloud: 'Nuvem',
+    header_logout: 'Sair',
+    header_connect_upline: 'Conectar Upline',
+    header_upline_label: 'Upline',
+    header_disconnect: 'Desconectar',
+    // Connect upline panel
+    connect_title: 'Conectar à rede do seu upline',
+    connect_desc: 'Peça o UID numérico ao seu upline e cole abaixo.',
+    connect_placeholder: 'UID numérico do upline',
+    connect_btn: 'Conectar',
+    connect_not_found: 'UID não encontrado. Verifique com seu upline.',
+    connect_self: 'Você não pode se adicionar como seu próprio upline.',
+    connect_success: 'Conectado com sucesso ao upline',
+    connect_error: 'Erro ao salvar conexão',
+    // Nav tabs
+    tab_dashboard: 'Painel Geral',
+    tab_network: 'Minha Rede',
+    tab_calculator: 'Calculadora',
+    tab_account: 'Minha Conta',
+    // Dashboard
+    dash_upline_connected: 'Conectado ao upline',
+    dash_upline_desc: 'Seu volume está sincronizado na hierarquia de',
+    dash_upline_vol: 'Vol. Total Upline',
+    dash_qualification: 'Qualificação',
+    dash_commission: 'comissão de liderança',
+    dash_team_vol: 'Volume de Equipa',
+    dash_members: 'membros na rede',
+    dash_personal: 'Aporte Individual',
+    dash_custodias: 'custódias ativas',
+    dash_next_level: 'Próximo nível',
+    dash_personal_inv: 'Investimento pessoal',
+    dash_team_volume: 'Volume de equipa',
+    dash_directs: 'Diretos ativos (≥$100)',
+    dash_missing: 'Falta',
+    // Network tab
+    net_title: 'Estrutura da Rede',
+    net_subtitle: 'Sincronizada em tempo real no Supabase',
+    net_table: 'Tabela',
+    net_tree: 'Árvore',
+    net_add_direct: t('net_add_direct'),
+    net_name: 'Nome',
+    net_deposit: 'Aporte',
+    net_team_vol: 'Vol. Equipa',
+    net_levels: 'Níveis',
+    net_actions: 'Ações',
+    net_you: 'Você',
+    net_drag: 'Arraste para navegar',
+    // Tree card
+    card_level1: '1º Nível',
+    card_level2: '2º Nível',
+    card_level3: '3º Nível+',
+    card_deposit: 'Aporte',
+    card_team_vol: 'Vol. Equipa',
+    card_upline_badge: 'Upline',
+    card_network_badge: 'Rede',
+    // Modal member
+    modal_add: 'Adicionar Indicado',
+    modal_edit: 'Editar',
+    modal_name: 'Nome Completo *',
+    modal_ref: 'Código REF',
+    modal_uid: 'UID',
+    modal_email: 'E-mail',
+    modal_phone: 'Telefone',
+    modal_custodias: 'Custódias Ativas',
+    modal_custodia_count: 'custódia(s)',
+    modal_add_custodia: '+ Adicionar Custódia',
+    modal_new_custodia: 'Nova Custódia',
+    modal_deposit_col: 'Aporte ($)',
+    modal_rate_col: 'Taxa (%)',
+    modal_sum: 'Soma',
+    modal_monthly: 'Rend./mês',
+    modal_cancel: 'Cancelar',
+    modal_save: 'Gravar',
+    modal_name_required: 'O nome é obrigatório.',
+    modal_added: 'Membro adicionado!',
+    modal_updated: 'Dados atualizados!',
+    // Confirm modal
+    confirm_remove: 'Remover Membro',
+    confirm_remove_msg: 'Remover e todos os sub-indicados?',
+    confirm_cancel: 'Cancelar',
+    confirm_ok: 'Confirmar',
+    confirm_removed: 'Membro removido.',
+    // Calculator
+    calc_title: 'Configuração do Bot',
+    calc_yield: 'Yield Diário do Bot (%)',
+    calc_custody_yield: 'Rendimento de Custódias',
+    calc_per_month: '/mês',
+    calc_per_day: '/dia',
+    calc_team_comm: 'Comissões da Rede',
+    calc_direct: 'Diretos N1 (10%)',
+    calc_indirect: 'Indiretos N2 (5%)',
+    calc_diff: 'Diferencial VIP',
+    calc_projection: 'Projeção Total (Custódias + Rede)',
+    calc_total_daily: 'Total Diário',
+    calc_total_monthly: 'Total Mensal',
+    // Account
+    acc_title: 'Perfil',
+    acc_name: 'Nome',
+    acc_email: 'E-mail',
+    acc_ref: 'Seu código REF (para compartilhar)',
+    acc_upline: 'Upline conectado',
+    acc_none: 'Nenhum',
+    acc_copied: 'Código copiado!',
+    acc_stats: 'Estatísticas da Rede',
+    acc_total: 'Membros totais',
+    acc_level1: '1º Nível',
+    acc_level2: '2º Nível',
+    acc_level3: '3º Nível+',
+    acc_how_title: 'Como funciona o multi-usuário',
+    acc_how_1: 'Cada conta gerencia a sua própria rede de forma independente e isolada.',
+    acc_how_2: 'Para conectar redes, o seu upline partilha o UID dele e você cola em "Conectar Upline".',
+    acc_how_3: 'Após conectar, a sua rede aparece abaixo da rede do upline na visualização em árvore.',
+    acc_how_4: 'Seu UID é',
+    acc_how_4b: '— copie e partilhe com os seus indicados.',
+    // Toasts
+    toast_ref_copied: 'REF copiado!',
+    toast_upline_disconnected: 'Upline desconectado.',
+    // Loading
+    loading_sync: 'A sincronizar sua rede...',
+    loading_general: 'A carregar...',
+  },
+  'en': {
+    landing_tagline: 'Manage your network, track your evolution, and build strong lines.',
+    landing_select: 'Select your network',
+    landing_network_name: 'Bitradex Network',
+    landing_network_sub: 'AI Bot · VIP System · Network',
+    landing_coming_soon: 'Coming soon',
+    landing_coming_sub: 'More networks available',
+    landing_footer: 'MyNetwork · Powered by Bitradex · v2.0',
+    auth_enter: 'Sign In',
+    auth_register: 'Create Account',
+    auth_subtitle: 'Leadership Panel · Bitradex Network',
+    auth_name: 'Your Full Name *',
+    auth_email: 'E-mail *',
+    auth_password: 'Password *',
+    auth_password_hint: 'Minimum 6 characters',
+    auth_uid: 'Your Bitradex UID *',
+    auth_uid_hint: 'The numeric UID of your Bitradex platform account.',
+    auth_upline: 'Your Upline UID (optional)',
+    auth_upline_hint: 'If someone referred you, enter their UID to connect networks.',
+    auth_btn_login: 'Enter Panel',
+    auth_btn_register: 'Create my Account',
+    auth_loading: 'Please wait...',
+    auth_success: 'Account created! Sign in to access your panel.',
+    auth_uid_required: 'UID is required.',
+    auth_name_required: 'Name is required.',
+    auth_uid_taken: 'This UID is already in use. Check with the Bitradex platform.',
+    auth_footer: 'MyNetwork · User-isolated data',
+    header_hello: 'Hello',
+    header_cloud: 'Cloud',
+    header_logout: 'Sign Out',
+    header_connect_upline: 'Connect Upline',
+    header_upline_label: 'Upline',
+    header_disconnect: 'Disconnect',
+    connect_title: 'Connect to your upline's network',
+    connect_desc: 'Ask your upline for their numeric UID and paste it below.',
+    connect_placeholder: 'Upline numeric UID',
+    connect_btn: 'Connect',
+    connect_not_found: 'UID not found. Check with your upline.',
+    connect_self: 'You cannot add yourself as your own upline.',
+    connect_success: 'Successfully connected to upline',
+    connect_error: 'Error saving connection',
+    tab_dashboard: 'Dashboard',
+    tab_network: 'My Network',
+    tab_calculator: 'Calculator',
+    tab_account: 'My Account',
+    dash_upline_connected: 'Connected to upline',
+    dash_upline_desc: 'Your volume is synced in the hierarchy of',
+    dash_upline_vol: 'Total Upline Vol.',
+    dash_qualification: 'Qualification',
+    dash_commission: 'leadership commission',
+    dash_team_vol: 'Team Volume',
+    dash_members: 'members in network',
+    dash_personal: 'Personal Investment',
+    dash_custodias: 'active custodies',
+    dash_next_level: 'Next level',
+    dash_personal_inv: 'Personal investment',
+    dash_team_volume: 'Team volume',
+    dash_directs: 'Active directs (≥$100)',
+    dash_missing: 'Missing',
+    net_title: 'Network Structure',
+    net_subtitle: 'Synced in real time via Supabase',
+    net_table: 'Table',
+    net_tree: 'Tree',
+    net_add_direct: '+ Add Direct',
+    net_name: 'Name',
+    net_deposit: 'Deposit',
+    net_team_vol: 'Team Vol.',
+    net_levels: 'Levels',
+    net_actions: 'Actions',
+    net_you: 'You',
+    net_drag: 'Drag to navigate',
+    card_level1: '1st Level',
+    card_level2: '2nd Level',
+    card_level3: '3rd Level+',
+    card_deposit: 'Deposit',
+    card_team_vol: 'Team Vol.',
+    card_upline_badge: 'Upline',
+    card_network_badge: 'Network',
+    modal_add: 'Add Referral',
+    modal_edit: 'Edit',
+    modal_name: 'Full Name *',
+    modal_ref: 'REF Code',
+    modal_uid: 'UID',
+    modal_email: 'E-mail',
+    modal_phone: 'Phone',
+    modal_custodias: 'Active Custodies',
+    modal_custodia_count: 'custody(ies)',
+    modal_add_custodia: '+ Add Custody',
+    modal_new_custodia: 'New Custody',
+    modal_deposit_col: 'Deposit ($)',
+    modal_rate_col: 'Rate (%)',
+    modal_sum: 'Total',
+    modal_monthly: 'Monthly yield',
+    modal_cancel: 'Cancel',
+    modal_save: 'Save',
+    modal_name_required: 'Name is required.',
+    modal_added: 'Member added!',
+    modal_updated: 'Data updated!',
+    confirm_remove: 'Remove Member',
+    confirm_remove_msg: 'Remove and all sub-referrals?',
+    confirm_cancel: 'Cancel',
+    confirm_ok: 'Confirm',
+    confirm_removed: 'Member removed.',
+    calc_title: 'Bot Configuration',
+    calc_yield: 'Bot Daily Yield (%)',
+    calc_custody_yield: 'Custody Yield',
+    calc_per_month: '/month',
+    calc_per_day: '/day',
+    calc_team_comm: 'Network Commissions',
+    calc_direct: 'Direct N1 (10%)',
+    calc_indirect: 'Indirect N2 (5%)',
+    calc_diff: 'VIP Differential',
+    calc_projection: 'Total Projection (Custodies + Network)',
+    calc_total_daily: 'Total Daily',
+    calc_total_monthly: 'Total Monthly',
+    acc_title: 'Profile',
+    acc_name: 'Name',
+    acc_email: 'E-mail',
+    acc_ref: 'Your REF code (to share)',
+    acc_upline: 'Connected upline',
+    acc_none: 'None',
+    acc_copied: 'Code copied!',
+    acc_stats: 'Network Statistics',
+    acc_total: 'Total members',
+    acc_level1: '1st Level',
+    acc_level2: '2nd Level',
+    acc_level3: '3rd Level+',
+    acc_how_title: 'How multi-user works',
+    acc_how_1: 'Each account manages its own network independently and in isolation.',
+    acc_how_2: 'To connect networks, your upline shares their UID and you paste it in "Connect Upline".',
+    acc_how_3: 'After connecting, your network appears below your upline's network in the tree view.',
+    acc_how_4: 'Your UID is',
+    acc_how_4b: '— copy and share with your referrals.',
+    toast_ref_copied: 'REF copied!',
+    toast_upline_disconnected: 'Upline disconnected.',
+    loading_sync: 'Syncing your network...',
+    loading_general: 'Loading...',
+  },
+  'ja': {
+    landing_tagline: 'ネットワークを管理し、進化を追跡し、強いラインを構築しましょう。',
+    landing_select: 'ネットワークを選択',
+    landing_network_name: 'Bitradexネットワーク',
+    landing_network_sub: 'AI Bot · VIPシステム · ネットワーク',
+    landing_coming_soon: '近日公開',
+    landing_coming_sub: '他のネットワークも利用可能',
+    landing_footer: 'MyNetwork · Powered by Bitradex · v2.0',
+    auth_enter: 'ログイン',
+    auth_register: 'アカウント作成',
+    auth_subtitle: 'リーダーシップパネル · Bitradexネットワーク',
+    auth_name: 'フルネーム *',
+    auth_email: 'メールアドレス *',
+    auth_password: 'パスワード *',
+    auth_password_hint: '最低6文字',
+    auth_uid: 'Bitradex UID *',
+    auth_uid_hint: 'BitradexプラットフォームアカウントのUID番号。',
+    auth_upline: 'アップラインUID（任意）',
+    auth_upline_hint: '紹介者がいる場合は、そのUIDを入力してネットワークを接続します。',
+    auth_btn_login: 'パネルに入る',
+    auth_btn_register: 'アカウントを作成',
+    auth_loading: 'お待ちください...',
+    auth_success: 'アカウントが作成されました！ログインしてパネルにアクセスしてください。',
+    auth_uid_required: 'UIDは必須です。',
+    auth_name_required: '名前は必須です。',
+    auth_uid_taken: 'このUIDはすでに使用されています。Bitradexプラットフォームで確認してください。',
+    auth_footer: 'MyNetwork · ユーザー分離データ',
+    header_hello: 'こんにちは',
+    header_cloud: 'クラウド',
+    header_logout: 'ログアウト',
+    header_connect_upline: 'アップライン接続',
+    header_upline_label: 'アップライン',
+    header_disconnect: '切断',
+    connect_title: 'アップラインのネットワークに接続',
+    connect_desc: 'アップラインのUID番号を取得して以下に貼り付けてください。',
+    connect_placeholder: 'アップラインUID番号',
+    connect_btn: '接続',
+    connect_not_found: 'UIDが見つかりません。アップラインに確認してください。',
+    connect_self: '自分自身をアップラインとして追加することはできません。',
+    connect_success: 'アップラインへの接続に成功しました',
+    connect_error: '接続の保存中にエラーが発生しました',
+    tab_dashboard: 'ダッシュボード',
+    tab_network: 'マイネットワーク',
+    tab_calculator: '計算機',
+    tab_account: 'マイアカウント',
+    dash_upline_connected: 'アップラインに接続済み',
+    dash_upline_desc: 'ボリュームは階層と同期されています',
+    dash_upline_vol: 'アップライン総量',
+    dash_qualification: '資格',
+    dash_commission: 'リーダーシップ手数料',
+    dash_team_vol: 'チームボリューム',
+    dash_members: 'ネットワークメンバー',
+    dash_personal: '個人投資',
+    dash_custodias: 'アクティブカストディ',
+    dash_next_level: '次のレベル',
+    dash_personal_inv: '個人投資',
+    dash_team_volume: 'チームボリューム',
+    dash_directs: 'アクティブ直接紹介（≥$100）',
+    dash_missing: '不足',
+    net_title: 'ネットワーク構造',
+    net_subtitle: 'Supabaseでリアルタイム同期',
+    net_table: 'テーブル',
+    net_tree: 'ツリー',
+    net_add_direct: '+ 直接追加',
+    net_name: '名前',
+    net_deposit: '預金',
+    net_team_vol: 'チーム量',
+    net_levels: 'レベル',
+    net_actions: 'アクション',
+    net_you: 'あなた',
+    net_drag: 'ドラッグしてナビゲート',
+    card_level1: '第1レベル',
+    card_level2: '第2レベル',
+    card_level3: '第3レベル+',
+    card_deposit: '預金',
+    card_team_vol: 'チーム量',
+    card_upline_badge: 'アップライン',
+    card_network_badge: 'ネットワーク',
+    modal_add: '紹介者を追加',
+    modal_edit: '編集',
+    modal_name: 'フルネーム *',
+    modal_ref: 'REFコード',
+    modal_uid: 'UID',
+    modal_email: 'メール',
+    modal_phone: '電話番号',
+    modal_custodias: 'アクティブカストディ',
+    modal_custodia_count: 'カストディ',
+    modal_add_custodia: '+ カストディ追加',
+    modal_new_custodia: '新規カストディ',
+    modal_deposit_col: '預金 ($)',
+    modal_rate_col: 'レート (%)',
+    modal_sum: '合計',
+    modal_monthly: '月次収益',
+    modal_cancel: 'キャンセル',
+    modal_save: '保存',
+    modal_name_required: '名前は必須です。',
+    modal_added: 'メンバーが追加されました！',
+    modal_updated: 'データが更新されました！',
+    confirm_remove: 'メンバーを削除',
+    confirm_remove_msg: 'および全サブ紹介者を削除しますか？',
+    confirm_cancel: 'キャンセル',
+    confirm_ok: '確認',
+    confirm_removed: 'メンバーが削除されました。',
+    calc_title: 'ボット設定',
+    calc_yield: 'ボット日次収益率 (%)',
+    calc_custody_yield: 'カストディ収益',
+    calc_per_month: '/月',
+    calc_per_day: '/日',
+    calc_team_comm: 'ネットワーク手数料',
+    calc_direct: '直接N1 (10%)',
+    calc_indirect: '間接N2 (5%)',
+    calc_diff: 'VIP差分',
+    calc_projection: '総予測（カストディ + ネットワーク）',
+    calc_total_daily: '日次合計',
+    calc_total_monthly: '月次合計',
+    acc_title: 'プロフィール',
+    acc_name: '名前',
+    acc_email: 'メール',
+    acc_ref: 'REFコード（共有用）',
+    acc_upline: '接続済みアップライン',
+    acc_none: 'なし',
+    acc_copied: 'コードをコピーしました！',
+    acc_stats: 'ネットワーク統計',
+    acc_total: '総メンバー数',
+    acc_level1: '第1レベル',
+    acc_level2: '第2レベル',
+    acc_level3: '第3レベル+',
+    acc_how_title: 'マルチユーザーの仕組み',
+    acc_how_1: '各アカウントは独立して自分のネットワークを管理します。',
+    acc_how_2: 'ネットワークを接続するには、アップラインのUIDを「アップライン接続」に貼り付けます。',
+    acc_how_3: '接続後、あなたのネットワークはツリービューでアップラインの下に表示されます。',
+    acc_how_4: 'あなたのUIDは',
+    acc_how_4b: '— 紹介者にコピーして共有してください。',
+    toast_ref_copied: 'REFをコピーしました！',
+    toast_upline_disconnected: 'アップラインが切断されました。',
+    loading_sync: 'ネットワークを同期中...',
+    loading_general: '読み込み中...',
+  },
+  'zh': {
+    landing_tagline: '管理您的网络，追踪您的进化，建立强大的线路。',
+    landing_select: '选择网络',
+    landing_network_name: 'Bitradex网络',
+    landing_network_sub: 'AI机器人 · VIP系统 · 网络',
+    landing_coming_soon: '即将推出',
+    landing_coming_sub: '更多网络可用',
+    landing_footer: 'MyNetwork · 由Bitradex提供支持 · v2.0',
+    auth_enter: '登录',
+    auth_register: '创建账户',
+    auth_subtitle: '领导力面板 · Bitradex网络',
+    auth_name: '您的全名 *',
+    auth_email: '电子邮件 *',
+    auth_password: '密码 *',
+    auth_password_hint: '最少6个字符',
+    auth_uid: '您的Bitradex UID *',
+    auth_uid_hint: 'Bitradex平台账户的数字UID。',
+    auth_upline: '您的上线UID（可选）',
+    auth_upline_hint: '如果有人推荐您，输入他们的UID来连接网络。',
+    auth_btn_login: '进入面板',
+    auth_btn_register: '创建我的账户',
+    auth_loading: '请稍候...',
+    auth_success: '账户已创建！请登录以访问您的面板。',
+    auth_uid_required: 'UID是必填项。',
+    auth_name_required: '姓名是必填项。',
+    auth_uid_taken: '此UID已被使用。请与Bitradex平台核实。',
+    auth_footer: 'MyNetwork · 用户隔离数据',
+    header_hello: '你好',
+    header_cloud: '云端',
+    header_logout: '退出',
+    header_connect_upline: '连接上线',
+    header_upline_label: '上线',
+    header_disconnect: '断开连接',
+    connect_title: '连接到您上线的网络',
+    connect_desc: '向您的上线索取数字UID并粘贴到下方。',
+    connect_placeholder: '上线数字UID',
+    connect_btn: '连接',
+    connect_not_found: '未找到UID。请与您的上线核实。',
+    connect_self: '您不能将自己添加为自己的上线。',
+    connect_success: '成功连接到上线',
+    connect_error: '保存连接时出错',
+    tab_dashboard: '仪表板',
+    tab_network: '我的网络',
+    tab_calculator: '计算器',
+    tab_account: '我的账户',
+    dash_upline_connected: '已连接到上线',
+    dash_upline_desc: '您的量与以下层级同步',
+    dash_upline_vol: '上线总量',
+    dash_qualification: '资格',
+    dash_commission: '领导力佣金',
+    dash_team_vol: '团队量',
+    dash_members: '网络成员',
+    dash_personal: '个人投资',
+    dash_custodias: '活跃托管',
+    dash_next_level: '下一级别',
+    dash_personal_inv: '个人投资',
+    dash_team_volume: '团队量',
+    dash_directs: '活跃直接推荐（≥$100）',
+    dash_missing: '缺少',
+    net_title: '网络结构',
+    net_subtitle: '通过Supabase实时同步',
+    net_table: '表格',
+    net_tree: '树形图',
+    net_add_direct: '+ 添加直接',
+    net_name: '姓名',
+    net_deposit: '存款',
+    net_team_vol: '团队量',
+    net_levels: '级别',
+    net_actions: '操作',
+    net_you: '您',
+    net_drag: '拖动以导航',
+    card_level1: '第1级',
+    card_level2: '第2级',
+    card_level3: '第3级+',
+    card_deposit: '存款',
+    card_team_vol: '团队量',
+    card_upline_badge: '上线',
+    card_network_badge: '网络',
+    modal_add: '添加推荐人',
+    modal_edit: '编辑',
+    modal_name: '全名 *',
+    modal_ref: 'REF代码',
+    modal_uid: 'UID',
+    modal_email: '电子邮件',
+    modal_phone: '电话',
+    modal_custodias: '活跃托管',
+    modal_custodia_count: '托管',
+    modal_add_custodia: '+ 添加托管',
+    modal_new_custodia: '新托管',
+    modal_deposit_col: '存款 ($)',
+    modal_rate_col: '利率 (%)',
+    modal_sum: '总计',
+    modal_monthly: '月收益',
+    modal_cancel: '取消',
+    modal_save: '保存',
+    modal_name_required: '姓名是必填项。',
+    modal_added: '成员已添加！',
+    modal_updated: '数据已更新！',
+    confirm_remove: '删除成员',
+    confirm_remove_msg: '删除及所有子推荐人？',
+    confirm_cancel: '取消',
+    confirm_ok: '确认',
+    confirm_removed: '成员已删除。',
+    calc_title: '机器人配置',
+    calc_yield: '机器人日收益率 (%)',
+    calc_custody_yield: '托管收益',
+    calc_per_month: '/月',
+    calc_per_day: '/天',
+    calc_team_comm: '网络佣金',
+    calc_direct: '直接N1 (10%)',
+    calc_indirect: '间接N2 (5%)',
+    calc_diff: 'VIP差异',
+    calc_projection: '总预测（托管 + 网络）',
+    calc_total_daily: '日总计',
+    calc_total_monthly: '月总计',
+    acc_title: '个人资料',
+    acc_name: '姓名',
+    acc_email: '电子邮件',
+    acc_ref: 'REF代码（用于分享）',
+    acc_upline: '已连接上线',
+    acc_none: '无',
+    acc_copied: '代码已复制！',
+    acc_stats: '网络统计',
+    acc_total: '总成员',
+    acc_level1: '第1级',
+    acc_level2: '第2级',
+    acc_level3: '第3级+',
+    acc_how_title: '多用户工作原理',
+    acc_how_1: '每个账户独立管理自己的网络，互相隔离。',
+    acc_how_2: '要连接网络，您的上线分享他们的UID，您将其粘贴到"连接上线"中。',
+    acc_how_3: '连接后，您的网络将在树形视图中显示在上线下方。',
+    acc_how_4: '您的UID是',
+    acc_how_4b: '— 复制并与您的推荐人分享。',
+    toast_ref_copied: 'REF已复制！',
+    toast_upline_disconnected: '上线已断开连接。',
+    loading_sync: '正在同步您的网络...',
+    loading_general: '加载中...',
+  },
+};
+
+// Detecta idioma do navegador
+const detectLang = () => {
+    const nav = navigator.language || navigator.userLanguage || 'en';
+    const code = nav.toLowerCase().slice(0, 2);
+    if (code === 'pt') return 'pt';
+    if (code === 'ja') return 'ja';
+    if (code === 'zh') return 'zh';
+    return 'en'; // fallback
+};
+
+// Hook de tradução
+const useLang = () => {
+    const [lang, setLang] = React.useState(() => {
+        return localStorage.getItem('mn_lang') || detectLang();
+    });
+    const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['en']?.[key] || key;
+    const changeLang = (l) => { setLang(l); localStorage.setItem('mn_lang', l); };
+    return { lang, t, changeLang };
+};
+
+const LANG_FLAGS = { pt: '🇧🇷', en: '🇺🇸', ja: '🇯🇵', zh: '🇨🇳' };
+const LANG_NAMES = { pt: 'PT', en: 'EN', ja: '日本語', zh: '中文' };
+
 const getPersonalSum = (user) => (user?.custodias || []).reduce((s, c) => s + (parseFloat(c.value) || 0), 0);
 const getMonthlyYield = (user) => (user?.custodias || []).reduce((s, c) => s + (parseFloat(c.value)||0)*((parseFloat(c.rate)||0)/100), 0);
 const fmtUSD = (v, dec=2) => '$' + (v||0).toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -80,13 +674,14 @@ const Ico = {
 // ═══════════════════════════════════════════════════════════════════════════════
 const LandingScreen = ({ showLanding, onEnter, onAuth }) => {
     const [showAuth, setShowAuth] = useState(!showLanding);
+    const { lang, t, changeLang } = useLang();
 
     const handleEnter = () => {
         setShowAuth(true);
         onEnter();
     };
 
-    if (showAuth) return <AuthScreen onAuth={onAuth} />;
+    if (showAuth) return <AuthScreen onAuth={onAuth} lang={lang} changeLang={changeLang} />;
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-[#03050a] relative overflow-hidden p-4">
@@ -110,21 +705,32 @@ const LandingScreen = ({ showLanding, onEnter, onAuth }) => {
                 </div>
 
                 {/* Tagline */}
+                {/* Seletor de idioma */}
+                <div className="flex gap-2 mb-8">
+                    {Object.entries(LANG_FLAGS).map(([code, flag]) => (
+                        <button key={code} onClick={() => changeLang(code)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border
+                                ${lang === code ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-[#0b0e1a] border-slate-800 text-gray-400 hover:text-white'}`}>
+                            {flag} {LANG_NAMES[code]}
+                        </button>
+                    ))}
+                </div>
+
                 <p className="text-gray-400 text-base leading-relaxed mb-12 max-w-sm">
-                    Gerencie sua rede, acompanhe sua evolução na Rede e construa linhas fortes.
+                    {t('landing_tagline')}
                 </p>
 
                 {/* Botão principal */}
                 <div className="w-full max-w-xs space-y-4">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-2">Selecione a rede</p>
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-2">{t('landing_select')}</p>
 
                     <button onClick={handleEnter}
                         className="w-full group relative flex items-center justify-between bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold px-6 py-4 rounded-2xl shadow-xl shadow-indigo-950/50 transition-all duration-200 hover:scale-105 hover:shadow-indigo-900/60">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center font-black text-lg">BX</div>
                             <div className="text-left">
-                                <p className="text-sm font-black">Rede Bitradex</p>
-                                <p className="text-[10px] text-indigo-300 font-medium">AI Bot · VIP System · Network</p>
+                                <p className="text-sm font-black">{t('landing_network_name')}</p>
+                                <p className="text-[10px] text-indigo-300 font-medium">{t('landing_network_sub')}</p>
                             </div>
                         </div>
                         <svg className="w-5 h-5 text-indigo-300 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -156,7 +762,12 @@ const LandingScreen = ({ showLanding, onEnter, onAuth }) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE: TELA DE AUTENTICAÇÃO
 // ═══════════════════════════════════════════════════════════════════════════════
-const AuthScreen = ({ onAuth }) => {
+const AuthScreen = ({ onAuth, lang: propLang, changeLang: propChangeLang }) => {
+    const { lang, t, changeLang } = useLang();
+    const activeLang = propLang || lang;
+    const activeChangeLang = propChangeLang || changeLang;
+    // Override t() to use prop lang if provided
+    const tr = (key) => TRANSLATIONS[activeLang]?.[key] || TRANSLATIONS['en']?.[key] || key;
     const [mode, setMode] = useState('login'); // 'login' | 'register'
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -177,20 +788,20 @@ const AuthScreen = ({ onAuth }) => {
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        if (!name.trim()) { setError('Nome é obrigatório.'); return; }
-        if (!uidInput.trim()) { setError('UID é obrigatório.'); return; }
+        if (!name.trim()) { setError(tr('auth_name_required')); return; }
+        if (!uidInput.trim()) { setError(tr('auth_uid_required')); return; }
         setLoading(true); setError('');
 
         // Verifica se o UID já está em uso
         const { data: existing } = await sb().from('user_profiles').select('user_id').eq('uid', uidInput.trim()).single();
-        if (existing) { setError('Este UID já está em uso. Verifique com a plataforma Bitradex.'); setLoading(false); return; }
+        if (existing) { setError(tr('auth_uid_taken')); setLoading(false); return; }
 
         const { data, error } = await sb().auth.signUp({
             email, password,
             options: { data: { display_name: name, uid: uidInput.trim(), upline_uid: uplineUid.trim() || null } }
         });
         if (error) { setError(error.message); setLoading(false); return; }
-        setSuccess('Conta criada! Faça login para entrar no painel.');
+        setSuccess(tr('auth_success'));
         setLoading(false);
     };
 
@@ -202,7 +813,7 @@ const AuthScreen = ({ onAuth }) => {
                         <span className="p-3 bg-gradient-to-r from-emerald-500 to-indigo-600 rounded-2xl text-white font-extrabold text-2xl shadow-lg shadow-indigo-950/40">MN</span>
                         <div className="text-left">
                             <h1 className="text-2xl font-black text-white tracking-tight">MyNetwork</h1>
-                            <p className="text-xs text-gray-500">Painel de Liderança · Rede Bitradex</p>
+                            <p className="text-xs text-gray-500">{tr('auth_subtitle')}</p>
                         </div>
                     </div>
                 </div>
@@ -225,31 +836,31 @@ const AuthScreen = ({ onAuth }) => {
                     <form onSubmit={mode === 'login' ? handleLogin : handleRegister} className="space-y-4">
                         {mode === 'register' && (
                             <div>
-                                <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Seu Nome Completo *</label>
+                                <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">{tr('auth_name')}</label>
                                 <input type="text" value={name} onChange={e => setName(e.target.value)} required
                                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none text-gray-200" placeholder="Como quer ser identificado"/>
                             </div>
                         )}
                         <div>
-                            <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">E-mail *</label>
+                            <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">{tr('auth_email')}</label>
                             <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
                                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none text-gray-200" placeholder="seu@email.com"/>
                         </div>
                         <div>
-                            <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Senha *</label>
+                            <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">{tr('auth_password')}</label>
                             <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none text-gray-200" placeholder="Mínimo 6 caracteres"/>
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none text-gray-200" placeholder={tr('auth_password_hint')}/>
                         </div>
                         {mode === 'register' && (
                             <>
                                 <div>
-                                    <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Seu UID Bitradex *</label>
+                                    <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">{tr('auth_uid')}</label>
                                     <input type="text" value={uidInput} onChange={e => setUidInput(e.target.value)} required
                                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none text-gray-200 font-mono" placeholder="Ex: 1234567890"/>
                                     <p className="text-[9px] text-gray-500 mt-1">O UID numérico da sua conta na plataforma Bitradex.</p>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">UID do seu Upline (opcional)</label>
+                                    <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">{tr('auth_upline')}</label>
                                     <input type="text" value={uplineUid} onChange={e => setUplineUid(e.target.value)}
                                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none text-gray-200 font-mono" placeholder="Ex: 9876543210"/>
                                     <p className="text-[9px] text-gray-500 mt-1">Se alguém te indicou, coloque o UID dele para conectar as redes.</p>
@@ -258,11 +869,11 @@ const AuthScreen = ({ onAuth }) => {
                         )}
                         <button type="submit" disabled={loading}
                             className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-950/40 mt-2">
-                            {loading ? 'Aguarde...' : mode === 'login' ? 'Entrar no Painel' : 'Criar minha Conta'}
+                            {loading ? {tr('auth_loading')} : mode === 'login' ? {tr('auth_btn_login')} : {tr('auth_btn_register')}}
                         </button>
                     </form>
                 </div>
-                <p className="text-center text-[10px] text-gray-600 mt-4">MyNetwork · Dados isolados por usuário</p>
+                <p className="text-center text-[10px] text-gray-600 mt-4">{tr('auth_footer')}</p>
             </div>
         </div>
     );
@@ -374,6 +985,7 @@ const App = () => {
     const [authLoading, setAuthLoading] = useState(true);
     const [profile, setProfile] = useState(null);
     const [showLanding, setShowLanding] = useState(true);
+    const { lang, t, changeLang } = useLang();
 
     // Rede e estado
     const [network, setNetwork] = useState({});
@@ -653,12 +1265,12 @@ const App = () => {
             .single();
 
         if (!uplineProfile) {
-            notify('UID não encontrado. Verifique com seu upline.', 'error');
+            notify(t('connect_not_found'), 'error');
             setLinkLoading(false);
             return;
         }
         if (uplineProfile.user_id === authUser.id) {
-            notify('Você não pode se adicionar como seu próprio upline.', 'error');
+            notify(t('connect_self'), 'error');
             setLinkLoading(false);
             return;
         }
@@ -668,7 +1280,7 @@ const App = () => {
         if (error) { notify('Erro ao salvar conexão: ' + error.message, 'error'); setLinkLoading(false); return; }
 
         setProfile(prev => ({ ...prev, upline_ref: uid }));
-        notify(`Conectado com sucesso ao upline: ${uplineProfile.display_name}!`, 'success');
+        notify(`${t('connect_success')}: ${uplineProfile.display_name}!`, 'success');
         setLinkLoading(false);
         setShowLinkPanel(false);
         setLinkRefInput('');
@@ -686,7 +1298,7 @@ const App = () => {
         const net = {};
         Object.entries(network).forEach(([k, v]) => { if (!v._isUpline) net[k] = v; });
         setNetwork(net);
-        notify('Upline desconectado.', 'info');
+        notify(t('toast_upline_disconnected'), 'info');
     };
 
     // ── Logout ────────────────────────────────────────────────────────────────
@@ -804,7 +1416,7 @@ const App = () => {
 
     // ── CRUD de membros ───────────────────────────────────────────────────────
     const handleSaveMember = async () => {
-        if (!form.name) return notify('O nome é obrigatório.', 'error');
+        if (!form.name) return notify(t('modal_name_required'), 'error');
         const updated = { ...network };
 
         if (modalMode === 'add') {
@@ -821,11 +1433,11 @@ const App = () => {
             };
             updated[selectedMemberId] = { ...updated[selectedMemberId], children: [...(updated[selectedMemberId].children || []), newId] };
             await saveNetwork(updated, [newId, selectedMemberId]);
-            notify(`Membro "${form.name}" adicionado!`, 'success');
+            notify(`${t('modal_added')} ${form.name}`, 'success');
         } else {
             updated[selectedMemberId] = { ...updated[selectedMemberId], name: form.name, uid: form.uid, refCode: form.refCode, email: form.email, phone: form.phone, custodias: formCustodias };
             await saveNetwork(updated, [selectedMemberId]);
-            notify(`Dados de "${form.name}" atualizados!`, 'success');
+            notify(`${t('modal_updated')} ${form.name}`, 'success');
         }
         setShowMemberModal(false);
     };
@@ -854,7 +1466,7 @@ const App = () => {
                     await sb().from('rede_membros').delete().eq('owner_id', authUser.id).eq('member_id', did);
                 }
                 if (parentId) await saveMemberToDb({ ...updated[parentId], owner_id: authUser.id, member_id: parentId });
-                notify('Membro removido.', 'info');
+                notify(t('confirm_removed'), 'info');
             }
         });
     };
@@ -910,7 +1522,7 @@ const App = () => {
         <div className="min-h-screen flex items-center justify-center bg-[#03050a]">
             <div className="text-center">
                 <div className="inline-block w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-500 text-sm">A carregar...</p>
+                <p className="text-gray-500 text-sm">{t('loading_general')}</p>
             </div>
         </div>
     );
@@ -921,7 +1533,7 @@ const App = () => {
         <div className="min-h-screen flex items-center justify-center bg-[#03050a]">
             <div className="text-center">
                 <div className="inline-block w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-500 text-sm">A sincronizar sua rede...</p>
+                <p className="text-gray-500 text-sm">{t('loading_sync')}</p>
             </div>
         </div>
     );
@@ -939,8 +1551,8 @@ const App = () => {
                         <h1 className="text-base font-black text-white tracking-tight">MyNetwork
                             <span className="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 font-extrabold px-2 py-0.5 rounded-full">Multi-Usuário</span>
                         </h1>
-                        <p className="text-[10px] text-gray-500">Olá, <span className="text-indigo-400 font-bold">{profile.display_name}</span> · REF: <span className="font-mono text-gray-400">{profile.ref_code}</span>
-                            <button onClick={() => { navigator.clipboard?.writeText(profile.ref_code); notify('REF copiado!'); }}
+                        <p className="text-[10px] text-gray-500">{t('header_hello')}, <span className="text-indigo-400 font-bold">{profile.display_name}</span> · REF: <span className="font-mono text-gray-400">{profile.ref_code}</span>
+                            <button onClick={() => { navigator.clipboard?.writeText(profile.ref_code); notify(t('toast_ref_copied')); }}
                                 className="ml-1 text-indigo-500 hover:text-indigo-400 inline-block align-middle"><Ico.Copy/></button>
                         </p>
                     </div>
@@ -956,16 +1568,26 @@ const App = () => {
                     ) : (
                         <button onClick={() => setShowLinkPanel(!showLinkPanel)}
                             className="flex items-center gap-1.5 bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/40 text-indigo-400 text-xs px-3 py-1.5 rounded-xl font-bold transition-all">
-                            <Ico.Link/> Conectar Upline
+                            <Ico.Link/> {t('header_connect_upline')}
                         </button>
                     )}
                     <div className="flex items-center gap-1.5 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span className="text-[10px] font-semibold text-gray-400">Nuvem</span>
+                        <span className="text-[10px] font-semibold text-gray-400">{t('header_cloud')}</span>
                     </div>
                     <button onClick={handleLogout} className="flex items-center gap-1.5 text-gray-400 hover:text-white text-xs px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 transition-all">
-                        <Ico.Logout/> Sair
+                        <Ico.Logout/> {t('header_logout')}
                     </button>
+                    <div className="flex gap-1">
+                        {Object.entries(LANG_FLAGS).map(([code, flag]) => (
+                            <button key={code} onClick={() => changeLang(code)}
+                                title={LANG_NAMES[code]}
+                                className={`px-2 py-1 rounded-lg text-xs font-bold transition-all border
+                                    ${lang === code ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-800 text-gray-400 hover:text-white'}`}>
+                                {flag}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </header>
 
@@ -973,12 +1595,12 @@ const App = () => {
             {showLinkPanel && (
                 <div className="bg-[#0d1225] border-b border-indigo-900/40 px-4 py-4">
                     <div className="max-w-xl mx-auto">
-                        <p className="text-xs font-bold text-indigo-300 mb-2 flex items-center gap-2"><Ico.Link/> Conectar à rede do seu upline</p>
-                        <p className="text-[10px] text-gray-500 mb-3">Peça o <strong>UID numérico</strong> ao seu upline e cole abaixo.</p>
+                        <p className="text-xs font-bold text-indigo-300 mb-2 flex items-center gap-2"><Ico.Link/> {t('connect_title')}</p>
+                        <p className="text-[10px] text-gray-500 mb-3">{t('connect_desc')}</p>
                         <div className="flex gap-2">
                             <input type="text" value={linkRefInput} onChange={e => setLinkRefInput(e.target.value)}
                                 className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-gray-200 focus:border-indigo-500 focus:outline-none"
-                                placeholder="UID numérico do upline"/>
+                                placeholder={t('connect_placeholder')}/>
                             <button onClick={handleLinkUpline} disabled={linkLoading}
                                 className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all">
                                 {linkLoading ? '...' : 'Conectar'}
@@ -1003,10 +1625,10 @@ const App = () => {
                 {/* Navegação lateral */}
                 <div className="lg:col-span-1 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0">
                     {[
-                        { id: 'dashboard', label: 'Painel Geral', icon: <Ico.Dashboard/> },
-                        { id: 'network',   label: 'Minha Rede',   icon: <Ico.Network/> },
-                        { id: 'calculator',label: 'Calculadora',  icon: <Ico.Calc/> },
-                        { id: 'account',   label: 'Minha Conta',  icon: <Ico.User/> },
+                        { id: 'dashboard', label: t('tab_dashboard'), icon: <Ico.Dashboard/> },
+                        { id: 'network',   label: t('tab_network'),   icon: <Ico.Network/> },
+                        { id: 'calculator',label: t('tab_calculator'),  icon: <Ico.Calc/> },
+                        { id: 'account',   label: t('tab_account'),  icon: <Ico.User/> },
                     ].map(t => (
                         <button key={t.id} onClick={() => setActiveTab(t.id)}
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex-1 lg:flex-initial
@@ -1082,13 +1704,13 @@ const App = () => {
                         <div className="space-y-4">
                             <div className="bg-[#0b0e1a] p-4 border border-[#161f35] rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                                 <div>
-                                    <h3 className="text-sm font-bold text-gray-300">Estrutura da Rede</h3>
-                                    <p className="text-xs text-gray-500">Sincronizada em tempo real no Supabase</p>
+                                    <h3 className="text-sm font-bold text-gray-300">{t('net_title')}</h3>
+                                    <p className="text-xs text-gray-500">{t('net_subtitle')}</p>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     <div className="bg-slate-950 p-1 rounded-xl flex border border-slate-800">
                                         <button onClick={() => setViewMode('table')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode==='table'?'bg-indigo-600 text-white':'text-gray-400'}`}>Tabela</button>
-                                        <button onClick={() => setViewMode('chart')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode==='chart'?'bg-indigo-600 text-white':'text-gray-400'}`}>Árvore</button>
+                                        <button onClick={() => setViewMode('chart')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode==='chart'?'bg-indigo-600 text-white':'text-gray-400'}`}>{t('net_tree')}</button>
                                     </div>
                                     <button onClick={exportExcel} className="bg-green-700 hover:bg-green-600 text-white text-xs px-3 py-2 rounded-xl font-bold transition-all">Excel</button>
                                     <button onClick={() => openAddModal('root')} className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-2 rounded-xl font-bold transition-all flex items-center gap-1"><Ico.Plus/> Adicionar Direto</button>
