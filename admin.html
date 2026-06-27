@@ -26,7 +26,7 @@ const SUPABASE_URL  = "https://ntqiunpljjehuiqdjetc.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50cWl1bnBsamplaHVpcWRqZXRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjY0NDAsImV4cCI6MjA5NzgwMjQ0MH0.N39lOduuu-pLysAWP6t0PSe6HFdmQELYXsXJ7IwDwpY";
 
 // ⚠️ TROQUE ESTA SENHA ANTES DE PUBLICAR
-const ADMIN_PASSWORD = "Tlocal@102030";
+const ADMIN_PASSWORD = "mynetwork@admin2024";
 
 let _sb = null;
 const sb = () => {
@@ -231,6 +231,7 @@ const AdminPanel = ({ onLogout }) => {
     const [netUser, setNetUser]     = useState(null);
     const [toast, setToast]         = useState({ show: false, msg: '', type: 'info' });
     const [confirmDel, setConfirmDel] = useState(null);
+    const [resetUser, setResetUser] = useState(null);
     const [stats, setStats]         = useState({ total: 0, withUid: 0, withUpline: 0, totalMembers: 0 });
 
     const notify = (msg, type = 'info') => {
@@ -271,6 +272,18 @@ const AdminPanel = ({ onLogout }) => {
         setUsers(prev => prev.map(u => u.user_id === updated.user_id ? updated : u));
         setEditUser(null);
         notify(`${updated.display_name} atualizado com sucesso!`, 'success');
+    };
+
+    const handleResetPassword = async (user) => {
+        const { error } = await sb().auth.resetPasswordForEmail(user.email, {
+            redirectTo: window.location.origin + '/index.html',
+        });
+        if (error) {
+            notify('Erro ao enviar reset: ' + error.message, 'error');
+        } else {
+            notify(`E-mail de reset enviado para ${user.email}`, 'success');
+        }
+        setResetUser(null);
     };
 
     const filtered = useMemo(() => {
@@ -404,6 +417,10 @@ const AdminPanel = ({ onLogout }) => {
                                                         className="p-1.5 bg-slate-800 hover:bg-amber-900/30 rounded-lg text-amber-400 transition-all text-xs" title="Editar">
                                                         ✏️
                                                     </button>
+                                                    <button onClick={() => setResetUser(u)}
+                                                        className="p-1.5 bg-slate-800 hover:bg-indigo-900/30 rounded-lg text-indigo-400 transition-all text-xs" title="Resetar senha">
+                                                        🔑
+                                                    </button>
                                                     <button onClick={() => setConfirmDel(u)}
                                                         className="p-1.5 bg-slate-800 hover:bg-red-900/30 rounded-lg text-red-400 transition-all text-xs" title="Remover">
                                                         🗑️
@@ -459,6 +476,34 @@ const AdminPanel = ({ onLogout }) => {
                         <div className="flex gap-3 justify-end">
                             <button onClick={() => setConfirmDel(null)} className="bg-slate-800 text-gray-300 px-4 py-2 rounded-xl text-sm font-bold">Cancelar</button>
                             <button onClick={() => handleDelete(confirmDel)} className="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Reset password modal */}
+            {resetUser && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+                    <div className="bg-[#0b0e1a] border border-indigo-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+                        <h3 className="font-bold text-lg text-indigo-400 mb-2">🔑 Resetar Senha</h3>
+                        <p className="text-sm text-gray-300 mb-1">
+                            Enviar e-mail de redefinição para <strong className="text-white">{resetUser.display_name}</strong>?
+                        </p>
+                        <div className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 my-4">
+                            <p className="text-xs text-gray-400 font-mono">{resetUser.email}</p>
+                        </div>
+                        <p className="text-[10px] text-gray-500 mb-5">
+                            O usuário receberá um link seguro por e-mail para definir uma nova senha. O link expira em 1 hora.
+                        </p>
+                        <div className="flex gap-3 justify-end">
+                            <button onClick={() => setResetUser(null)}
+                                className="bg-slate-800 text-gray-300 px-4 py-2 rounded-xl text-sm font-bold">
+                                Cancelar
+                            </button>
+                            <button onClick={() => handleResetPassword(resetUser)}
+                                className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-bold">
+                                Enviar Reset
+                            </button>
                         </div>
                     </div>
                 </div>
