@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyNetwork — Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #03050a; color: #f3f4f6; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+const SUPABASE_URL  = "https://ntqiunpljjehuiqdjetc.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50cWl1bnBsamplaHVpcWRqZXRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjY0NDAsImV4cCI6MjA5NzgwMjQ0MH0.N39lOduuu-pLysAWP6t0PSe6HFdmQELYXsXJ7IwDwpY";
+
+// ⚠️ TROQUE ESTA SENHA ANTES DE PUBLICAR
+const ADMIN_PASSWORD = "Tlocal@102030";
+
+let _sb = null;
+const sb = () => {
+    if (_sb) return _sb;
+    _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    return _sb;
+};
+
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+const fmtUSD  = (v) => '$' + (v||0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+// ─── TELA DE LOGIN ADMIN ─────────────────────────────────────────────────────
+const AdminLogin = ({ onAuth }) => {
+    const [pwd, setPwd] = useState('');
+    const [err, setErr] = useState('');
+
+    const handle = (e) => {
+        e.preventDefault();
+        if (pwd === ADMIN_PASSWORD) {
+            sessionStorage.setItem('mn_admin', '1');
+            onAuth();
+        } else {
+            setErr('Senha incorreta.');
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-[#03050a] p-4">
+            <div className="w-full max-w-sm">
+                <div className="text-center mb-8">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-500 to-indigo-600 rounded-2xl shadow-2xl mb-4">
+                        <span className="text-white font-black text-2xl">A</span>
+                    </div>
+                    <h1 className="text-2xl font-black text-white">Admin Panel</h1>
+                    <p className="text-xs text-gray-500 mt-1">MyNetwork · Acesso Restrito</p>
+                </div>
+                <div className="bg-[#0b0e1a] border border-[#1b253b] rounded-2xl p-6 shadow-2xl">
+                    {err && <div className="bg-red-950/50 border border-red-800 text-red-300 text-xs p-3 rounded-xl mb-4">{err}</div>}
+                    <form onSubmit={handle} className="space-y-4">
+                        <div>
+                            <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Senha de Administrador</label>
+                            <input type="password" value={pwd} onChange={e => setPwd(e.target.value)} required autoFocus
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none text-gray-200"/>
+                        </div>
+                        <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all">
+                            Entrar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ─── MODAL EDITAR USUÁRIO ────────────────────────────────────────────────────
+const EditUserModal = ({ user, onSave, onClose }) => {
+    const [form, setForm] = useState({
+        display_name: user.display_name || '',
+        uid:          user.uid || '',
+        upline_ref:   user.upline_ref || '',
+        email:        user.email || '',
+        ref_code:     user.ref_code || '',
+    });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleSave = async () => {
+        setLoading(true); setError('');
+        const { error } = await sb().from('user_profiles')
+            .update({
+                display_name: form.display_name,
+                uid:          form.uid || null,
+                upline_ref:   form.upline_ref || null,
+                ref_code:     form.ref_code || null,
+            })
+            .eq('user_id', user.user_id);
+        if (error) { setError(error.message); setLoading(false); return; }
+        onSave({ ...user, ...form });
+        setLoading(false);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+            <div className="bg-[#0b0e1a] border border-[#1c273e] rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+                <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-5">
+                    <h3 className="font-bold text-lg text-gray-200">Editar Usuário</h3>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-xl">✕</button>
+                </div>
+                {error && <div className="bg-red-950/50 border border-red-800 text-red-300 text-xs p-3 rounded-xl mb-4">{error}</div>}
+                <div className="space-y-4">
+                    {[
+                        { key: 'display_name', label: 'Nome de Exibição' },
+                        { key: 'uid',          label: 'UID Bitradex' },
+                        { key: 'upline_ref',   label: 'UID do Upline' },
+                        { key: 'ref_code',     label: 'Código REF' },
+                    ].map(f => (
+                        <div key={f.key}>
+                            <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">{f.label}</label>
+                            <input type="text" value={form[f.key]} onChange={e => setForm({...form, [f.key]: e.target.value})}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none text-gray-200 font-mono"/>
+                        </div>
+                    ))}
+                    <div>
+                        <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">E-mail (somente leitura)</label>
+                        <div className="bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-500 font-mono">{user.email}</div>
+                    </div>
+                </div>
+                <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-slate-800">
+                    <button onClick={onClose} className="bg-slate-900 hover:bg-slate-800 text-gray-400 border border-slate-800 px-5 py-2.5 rounded-xl text-sm font-bold">Cancelar</button>
+                    <button onClick={handleSave} disabled={loading} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl text-sm font-bold">
+                        {loading ? 'Salvando...' : 'Salvar'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ─── MODAL VER REDE ──────────────────────────────────────────────────────────
+const NetworkModal = ({ user, onClose }) => {
+    const [members, setMembers] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const load = async () => {
+            const { data } = await sb().from('rede_membros')
+                .select('*')
+                .eq('owner_id', user.user_id)
+                .order('member_id');
+            setMembers(data || []);
+            setLoading(false);
+        };
+        load();
+    }, [user.user_id]);
+
+    const totalAporte = members.reduce((s, m) => s + (parseFloat(m.personal)||0), 0);
+    const totalMembros = members.filter(m => m.member_id !== 'root').length;
+
+    return (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+            <div className="bg-[#0b0e1a] border border-[#1c273e] rounded-2xl max-w-3xl w-full p-6 shadow-2xl max-h-[90vh] flex flex-col">
+                <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+                    <div>
+                        <h3 className="font-bold text-lg text-gray-200">Rede de {user.display_name}</h3>
+                        <p className="text-xs text-gray-500">UID: {user.uid} · {totalMembros} membros · {fmtUSD(totalAporte)} total</p>
+                    </div>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-xl">✕</button>
+                </div>
+                {loading ? (
+                    <div className="flex-1 flex items-center justify-center">
+                        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                ) : (
+                    <div className="overflow-y-auto no-scrollbar flex-1">
+                        <table className="w-full text-left text-xs">
+                            <thead className="sticky top-0 bg-[#0b0e1a]">
+                                <tr className="border-b border-slate-800 text-[10px] text-gray-400 uppercase font-black tracking-widest">
+                                    <th className="p-3">Nome</th>
+                                    <th className="p-3">UID</th>
+                                    <th className="p-3 text-right">Aporte</th>
+                                    <th className="p-3 text-center">Custódias</th>
+                                    <th className="p-3 text-center">Filhos</th>
+                                    <th className="p-3 text-center">Sync</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {members.map(m => (
+                                    <tr key={m.member_id} className={`border-b border-slate-800/40 hover:bg-slate-800/20 transition-colors ${m.member_id === 'root' ? 'bg-indigo-950/20' : ''}`}>
+                                        <td className="p-3">
+                                            <span className="font-semibold text-gray-200">{m.name}</span>
+                                            {m.member_id === 'root' && <span className="ml-2 text-[9px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">Root</span>}
+                                        </td>
+                                        <td className="p-3 font-mono text-gray-400">{m.uid || <span className="text-amber-500">⚠️ sem UID</span>}</td>
+                                        <td className="p-3 text-right font-bold text-gray-200">{fmtUSD(m.personal)}</td>
+                                        <td className="p-3 text-center text-gray-400">{(m.custodias||[]).length}</td>
+                                        <td className="p-3 text-center text-gray-400">{(m.children||[]).length}</td>
+                                        <td className="p-3 text-center">
+                                            {m.linked_user_id
+                                                ? <span className="text-emerald-400 font-black">✓</span>
+                                                : <span className="text-slate-600">—</span>}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {members.length === 0 && (
+                            <div className="text-center py-12 text-gray-600 text-sm">Nenhum membro cadastrado</div>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+// ─── PAINEL PRINCIPAL ────────────────────────────────────────────────────────
+const AdminPanel = ({ onLogout }) => {
+    const [users, setUsers]         = useState([]);
+    const [loading, setLoading]     = useState(true);
+    const [search, setSearch]       = useState('');
+    const [editUser, setEditUser]   = useState(null);
+    const [netUser, setNetUser]     = useState(null);
+    const [toast, setToast]         = useState({ show: false, msg: '', type: 'info' });
+    const [confirmDel, setConfirmDel] = useState(null);
+    const [stats, setStats]         = useState({ total: 0, withUid: 0, withUpline: 0, totalMembers: 0 });
+
+    const notify = (msg, type = 'info') => {
+        setToast({ show: true, msg, type });
+        setTimeout(() => setToast({ show: false, msg: '', type: 'info' }), 3000);
+    };
+
+    const loadUsers = async () => {
+        setLoading(true);
+        const { data: profiles } = await sb().from('user_profiles').select('*').order('created_at', { ascending: false });
+        const { data: members } = await sb().from('rede_membros').select('owner_id, member_id, personal');
+
+        if (profiles) {
+            setUsers(profiles);
+            const totalMembers = (members || []).filter(m => m.member_id !== 'root').length;
+            setStats({
+                total: profiles.length,
+                withUid: profiles.filter(p => p.uid).length,
+                withUpline: profiles.filter(p => p.upline_ref).length,
+                totalMembers,
+            });
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => { loadUsers(); }, []);
+
+    const handleDelete = async (user) => {
+        // Deleta perfil (auth user permanece — só remove o perfil e rede)
+        await sb().from('rede_membros').delete().eq('owner_id', user.user_id);
+        await sb().from('user_profiles').delete().eq('user_id', user.user_id);
+        setUsers(prev => prev.filter(u => u.user_id !== user.user_id));
+        notify(`Usuário ${user.display_name} removido.`, 'info');
+        setConfirmDel(null);
+    };
+
+    const handleSaved = (updated) => {
+        setUsers(prev => prev.map(u => u.user_id === updated.user_id ? updated : u));
+        setEditUser(null);
+        notify(`${updated.display_name} atualizado com sucesso!`, 'success');
+    };
+
+    const filtered = useMemo(() => {
+        if (!search) return users;
+        const q = search.toLowerCase();
+        return users.filter(u =>
+            u.display_name?.toLowerCase().includes(q) ||
+            u.email?.toLowerCase().includes(q) ||
+            u.uid?.includes(q) ||
+            u.upline_ref?.includes(q) ||
+            u.ref_code?.toLowerCase().includes(q)
+        );
+    }, [users, search]);
+
+    return (
+        <div className="min-h-screen bg-[#03050a] flex flex-col">
+            {/* Header */}
+            <header className="bg-[#0b0e1a] border-b border-[#1b253b] px-4 py-3 flex justify-between items-center sticky top-0 z-40">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-gradient-to-br from-red-500 to-indigo-600 rounded-xl flex items-center justify-center font-black text-white text-sm">A</div>
+                    <div>
+                        <h1 className="text-sm font-black text-white">MyNetwork Admin</h1>
+                        <p className="text-[10px] text-gray-500">Painel de Administração</p>
+                    </div>
+                </div>
+                <div className="flex gap-2 items-center">
+                    <button onClick={loadUsers} className="text-xs bg-slate-900 hover:bg-slate-800 border border-slate-800 text-gray-400 px-3 py-1.5 rounded-xl font-bold transition-all">
+                        🔄 Atualizar
+                    </button>
+                    <button onClick={onLogout} className="text-xs bg-slate-900 hover:bg-slate-800 border border-slate-800 text-gray-400 px-3 py-1.5 rounded-xl font-bold transition-all">
+                        Sair
+                    </button>
+                </div>
+            </header>
+
+            {/* Toast */}
+            {toast.show && (
+                <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-xl text-xs font-semibold border
+                    ${toast.type==='error' ? 'bg-red-950 border-red-700 text-red-300' : toast.type==='success' ? 'bg-emerald-950 border-emerald-700 text-emerald-300' : 'bg-slate-900 border-slate-700 text-white'}`}>
+                    {toast.msg}
+                </div>
+            )}
+
+            <main className="flex-1 max-w-7xl mx-auto w-full p-4 space-y-4">
+                {/* Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                        { label: 'Usuários', value: stats.total, color: 'text-white' },
+                        { label: 'Com UID', value: stats.withUid, color: 'text-emerald-400' },
+                        { label: 'Com Upline', value: stats.withUpline, color: 'text-indigo-400' },
+                        { label: 'Total Membros', value: stats.totalMembers, color: 'text-blue-400' },
+                    ].map(s => (
+                        <div key={s.label} className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl p-4 text-center">
+                            <p className={`text-3xl font-black ${s.color}`}>{s.value}</p>
+                            <p className="text-[10px] text-gray-500 uppercase font-bold mt-1">{s.label}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Search */}
+                <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl p-4 flex gap-3 items-center">
+                    <span className="text-gray-500">🔍</span>
+                    <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+                        placeholder="Buscar por nome, e-mail, UID, upline ou REF..."
+                        className="flex-1 bg-transparent text-sm text-gray-200 focus:outline-none placeholder-gray-600"/>
+                    {search && <button onClick={() => setSearch('')} className="text-gray-500 hover:text-gray-300 text-xs font-bold">✕ limpar</button>}
+                </div>
+
+                {/* Users table */}
+                <div className="bg-[#0b0e1a] border border-[#161f35] rounded-2xl overflow-hidden">
+                    <div className="px-4 py-3 border-b border-slate-800 flex justify-between items-center">
+                        <h2 className="text-sm font-bold text-gray-300">
+                            Usuários {search ? `(${filtered.length} de ${users.length})` : `(${users.length})`}
+                        </h2>
+                    </div>
+
+                    {loading ? (
+                        <div className="flex items-center justify-center py-20">
+                            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="border-b border-slate-800 text-[10px] text-gray-400 uppercase font-black tracking-widest">
+                                        <th className="p-3">Usuário</th>
+                                        <th className="p-3">UID Bitradex</th>
+                                        <th className="p-3">Upline</th>
+                                        <th className="p-3">REF</th>
+                                        <th className="p-3 text-center">Cadastro</th>
+                                        <th className="p-3 text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filtered.map(u => (
+                                        <tr key={u.user_id} className="border-b border-slate-800/40 hover:bg-slate-800/20 transition-colors">
+                                            <td className="p-3">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center text-white font-black text-xs flex-shrink-0">
+                                                        {(u.display_name||'?')[0].toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-bold text-gray-200">{u.display_name}</p>
+                                                        <p className="text-[10px] text-gray-500">{u.email}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="p-3">
+                                                {u.uid
+                                                    ? <span className="font-mono text-xs text-gray-300">{u.uid}</span>
+                                                    : <span className="text-[10px] text-amber-500 font-bold">⚠️ não definido</span>}
+                                            </td>
+                                            <td className="p-3">
+                                                {u.upline_ref
+                                                    ? <span className="font-mono text-xs text-indigo-400">{u.upline_ref}</span>
+                                                    : <span className="text-[10px] text-slate-600">—</span>}
+                                            </td>
+                                            <td className="p-3">
+                                                <span className="font-mono text-[10px] text-gray-500">{u.ref_code || '—'}</span>
+                                            </td>
+                                            <td className="p-3 text-center text-[10px] text-gray-500">
+                                                {fmtDate(u.created_at)}
+                                            </td>
+                                            <td className="p-3">
+                                                <div className="flex gap-1 justify-end">
+                                                    <button onClick={() => setNetUser(u)}
+                                                        className="p-1.5 bg-slate-800 hover:bg-blue-900/30 rounded-lg text-blue-400 transition-all text-xs" title="Ver rede">
+                                                        🌐
+                                                    </button>
+                                                    <button onClick={() => setEditUser(u)}
+                                                        className="p-1.5 bg-slate-800 hover:bg-amber-900/30 rounded-lg text-amber-400 transition-all text-xs" title="Editar">
+                                                        ✏️
+                                                    </button>
+                                                    <button onClick={() => setConfirmDel(u)}
+                                                        className="p-1.5 bg-slate-800 hover:bg-red-900/30 rounded-lg text-red-400 transition-all text-xs" title="Remover">
+                                                        🗑️
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {filtered.length === 0 && (
+                                        <tr><td colSpan="6" className="text-center py-12 text-gray-600 text-sm">Nenhum usuário encontrado</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                {/* Warning: users without UID */}
+                {users.filter(u => !u.uid).length > 0 && (
+                    <div className="bg-amber-950/30 border border-amber-800/40 rounded-2xl p-4 flex gap-3">
+                        <span className="text-amber-500 text-lg">⚠️</span>
+                        <div>
+                            <p className="text-xs font-bold text-amber-400 mb-1">
+                                {users.filter(u => !u.uid).length} usuário(s) sem UID Bitradex
+                            </p>
+                            <p className="text-[10px] text-amber-600">
+                                Estes usuários não terão sincronização automática de rede. Edite e preencha o UID de cada um.
+                            </p>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                                {users.filter(u => !u.uid).map(u => (
+                                    <button key={u.user_id} onClick={() => setEditUser(u)}
+                                        className="text-[9px] bg-amber-900/30 hover:bg-amber-800/40 border border-amber-800/40 text-amber-400 px-2 py-1 rounded-lg font-bold transition-all">
+                                        ✏️ {u.display_name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </main>
+
+            {/* Modais */}
+            {editUser && <EditUserModal user={editUser} onSave={handleSaved} onClose={() => setEditUser(null)} />}
+            {netUser && <NetworkModal user={netUser} onClose={() => setNetUser(null)} />}
+
+            {/* Confirm delete */}
+            {confirmDel && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+                    <div className="bg-[#0b0e1a] border border-red-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+                        <h3 className="font-bold text-lg text-red-400 mb-2">⚠️ Remover Usuário</h3>
+                        <p className="text-sm text-gray-300 mb-1">Remover <strong className="text-white">{confirmDel.display_name}</strong>?</p>
+                        <p className="text-xs text-gray-500 mb-5">Isto remove o perfil e toda a rede do usuário. A conta de autenticação permanece.</p>
+                        <div className="flex gap-3 justify-end">
+                            <button onClick={() => setConfirmDel(null)} className="bg-slate-800 text-gray-300 px-4 py-2 rounded-xl text-sm font-bold">Cancelar</button>
+                            <button onClick={() => handleDelete(confirmDel)} className="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <footer className="text-center text-[10px] text-gray-700 py-4">
+                MyNetwork Admin · Acesso restrito · {new Date().getFullYear()}
+            </footer>
+        </div>
+    );
+};
+
+// ─── APP ─────────────────────────────────────────────────────────────────────
+const App = () => {
+    const [authed, setAuthed] = useState(() => sessionStorage.getItem('mn_admin') === '1');
+
+    const handleLogout = () => {
+        sessionStorage.removeItem('mn_admin');
+        setAuthed(false);
+    };
+
+    if (!authed) return <AdminLogin onAuth={() => setAuthed(true)} />;
+    return <AdminPanel onLogout={handleLogout} />;
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
