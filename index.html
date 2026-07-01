@@ -516,6 +516,111 @@ const TreeCard = ({ memberId, network, stats, onEdit, onAddSub, onRemove, rootId
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE: APP PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENTE: REDEFINIR SENHA
+// ═══════════════════════════════════════════════════════════════════════════════
+const ResetPasswordScreen = ({ onDone }) => {
+    const { lang, t, setL } = useLang();
+    const tr = (k) => (T[lang]||T.en)[k] || k;
+    const [password, setPassword] = useState('');
+    const [confirm, setConfirm] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
+
+    const handleReset = async (e) => {
+        e.preventDefault();
+        if (password.length < 6) { setError('A senha deve ter no mínimo 6 caracteres.'); return; }
+        if (password !== confirm) { setError('As senhas não coincidem.'); return; }
+        setLoading(true); setError('');
+        const { error } = await sb().auth.updateUser({ password });
+        if (error) { setError(error.message); setLoading(false); return; }
+        setSuccess(true);
+        setLoading(false);
+        setTimeout(() => onDone(), 2500);
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center p-4 bg-[#03050a]">
+            <div className="w-full max-w-md">
+                <div className="text-center mb-8">
+                    <div className="inline-flex items-center gap-3 mb-4">
+                        <span className="p-3 bg-gradient-to-r from-emerald-500 to-indigo-600 rounded-2xl text-white font-extrabold text-2xl shadow-lg">MN</span>
+                        <div className="text-left">
+                            <h1 className="text-2xl font-black text-white tracking-tight">MyNetwork</h1>
+                            <p className="text-xs text-gray-500">Redefinir Senha</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-[#0b0e1a] border border-[#1b253b] rounded-2xl p-6 shadow-2xl">
+                    {success ? (
+                        <div className="text-center py-6">
+                            <div className="text-5xl mb-4">✅</div>
+                            <h3 className="text-lg font-black text-emerald-400 mb-2">Senha redefinida!</h3>
+                            <p className="text-xs text-gray-400">Redirecionando para o painel...</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="flex items-center gap-3 bg-indigo-950/40 border border-indigo-900/40 rounded-xl p-3 mb-5">
+                                <span className="text-2xl">🔑</span>
+                                <div>
+                                    <p className="text-xs font-bold text-indigo-300">Crie sua nova senha</p>
+                                    <p className="text-[10px] text-gray-500">A nova senha deve ter no mínimo 6 caracteres.</p>
+                                </div>
+                            </div>
+
+                            {error && (
+                                <div className="bg-red-950/50 border border-red-800 text-red-300 text-xs p-3 rounded-xl mb-4">{error}</div>
+                            )}
+
+                            <form onSubmit={handleReset} className="space-y-4">
+                                <div>
+                                    <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Nova Senha *</label>
+                                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none text-gray-200"
+                                        placeholder="Mínimo 6 caracteres" autoFocus/>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Confirmar Nova Senha *</label>
+                                    <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} required minLength={6}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none text-gray-200"
+                                        placeholder="Repita a nova senha"/>
+                                </div>
+
+                                {/* Indicador de força da senha */}
+                                {password.length > 0 && (
+                                    <div className="space-y-1">
+                                        <div className="flex gap-1">
+                                            {[1,2,3,4].map(i => (
+                                                <div key={i} className={"h-1 flex-1 rounded-full transition-all " + (
+                                                    password.length >= i * 3
+                                                        ? i <= 1 ? 'bg-red-500' : i <= 2 ? 'bg-amber-500' : i <= 3 ? 'bg-yellow-400' : 'bg-emerald-500'
+                                                        : 'bg-slate-800'
+                                                )}></div>
+                                            ))}
+                                        </div>
+                                        <p className="text-[9px] text-gray-500">
+                                            {password.length < 4 ? 'Muito fraca' : password.length < 7 ? 'Fraca' : password.length < 10 ? 'Boa' : 'Forte'}
+                                        </p>
+                                    </div>
+                                )}
+
+                                <button type="submit" disabled={loading}
+                                    className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-all shadow-lg mt-2">
+                                    {loading ? 'Salvando...' : 'Salvar Nova Senha'}
+                                </button>
+                            </form>
+                        </>
+                    )}
+                </div>
+                <p className="text-center text-[10px] text-gray-600 mt-4">MyNetwork · Redefinição segura de senha</p>
+            </div>
+        </div>
+    );
+};
+
 const App = () => {
     const [authUser, setAuthUser] = useState(null);
     const [authLoading, setAuthLoading] = useState(true);
@@ -561,12 +666,30 @@ const App = () => {
     };
 
     // ── Auth ─────────────────────────────────────────────────────────────────
+    const [isPasswordReset, setIsPasswordReset] = useState(false);
+
     useEffect(() => {
+        // Detecta token de reset de senha na URL
+        const hash = window.location.hash;
+        if (hash.includes('type=recovery') || hash.includes('token_type=recovery') || hash.includes('error=access_denied')) {
+            // Limpa o hash da URL
+            if (!hash.includes('error=access_denied')) {
+                setIsPasswordReset(true);
+            }
+        }
+
         sb().auth.getSession().then(({ data }) => {
             setAuthUser(data.session?.user || null);
             setAuthLoading(false);
         });
+
         const { data: { subscription } } = sb().auth.onAuthStateChange((_event, session) => {
+            if (_event === 'PASSWORD_RECOVERY') {
+                setIsPasswordReset(true);
+                setAuthUser(session?.user || null);
+                setAuthLoading(false);
+                return;
+            }
             setAuthUser(session?.user || null);
         });
         return () => subscription.unsubscribe();
@@ -1194,6 +1317,13 @@ const App = () => {
                 <p className="text-gray-500 text-sm">{t('loading')}</p>
             </div>
         </div>
+    );
+
+    if (isPasswordReset && authUser) return (
+        <ResetPasswordScreen onDone={() => {
+            setIsPasswordReset(false);
+            window.history.replaceState(null, '', window.location.pathname);
+        }} />
     );
 
     if (!authUser) return <LandingScreen showLanding={showLanding} onEnter={() => setShowLanding(false)} onAuth={u => setAuthUser(u)} />;
